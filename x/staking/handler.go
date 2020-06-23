@@ -2,6 +2,7 @@ package staking
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/tendermint/tendermint/libs/common"
 
@@ -45,6 +46,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 // EndBlocker is called every block, update validator set
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
+	beginTime := time.Now()
 	// calculate validator set changes
 	validatorUpdates := make([]abci.ValidatorUpdate, 0)
 	if k.IsEndOfEpoch(ctx) {
@@ -87,7 +89,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			}
 			return false
 		})
-
+	escaped := time.Now().Sub(beginTime)
+	ctx.Logger().Info(fmt.Sprintf("staking EndBlocker escaped time:%s", escaped.String()))
 	return validatorUpdates
 }
 

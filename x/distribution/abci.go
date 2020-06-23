@@ -1,6 +1,9 @@
 package distribution
 
 import (
+	"fmt"
+	"time"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -12,6 +15,7 @@ import (
 // and distribute rewards for the previous block
 func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k keeper.Keeper) {
 	// determine the total power signing the block
+	beginTime := time.Now()
 	var previousTotalPower int64
 	for _, voteInfo := range req.LastCommitInfo.GetVotes() {
 		previousTotalPower += voteInfo.Validator.Power
@@ -29,4 +33,7 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k keeper.Keeper) 
 	// record the proposer for when we payout on the next block
 	consAddr := sdk.ConsAddress(req.Header.ProposerAddress)
 	k.SetPreviousProposerConsAddr(ctx, consAddr)
+
+	escaped := time.Now().Sub(beginTime)
+	ctx.Logger().Info(fmt.Sprintf("distribution BeginBlocker escaped time:%s", escaped.String()))
 }

@@ -2,9 +2,11 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/tendermint/tendermint/crypto"
-	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -67,6 +69,7 @@ func queryDelegator(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, s
 }
 
 func queryValidators(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
+	beginTime := time.Now()
 	var params types.QueryValidatorsParams
 
 	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
@@ -98,7 +101,8 @@ func queryValidators(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, 
 	if err != nil {
 		return nil, defaultQueryErrJSONMarshal(err)
 	}
-
+	escaped := time.Now().Sub(beginTime)
+	ctx.Logger().Info(fmt.Sprintf("staking queryValidators escaped time:%s total validator num:%d", escaped.String(), len(validators)))
 	return res, nil
 }
 
