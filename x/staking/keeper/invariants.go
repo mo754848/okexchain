@@ -37,7 +37,10 @@ func DelegatorVotesInvariant(k Keeper) sdk.Invariant {
 
 			valTotalVotes := validator.GetDelegatorShares()
 
-			totalVotes := k.getVotesFromDefaultMinSelfDelegation()
+			totalVotes := sdk.ZeroDec()
+			if !validator.MinSelfDelegation.Equal(sdk.ZeroDec()) {
+				totalVotes = k.getVotesFromDefaultMinSelfDelegation()
+			}
 
 			votes := k.GetValidatorVotes(ctx, validator.GetOperator())
 			for _, vote := range votes {
