@@ -3,10 +3,16 @@ package main
 import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bankrest "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	supplyrest "github.com/cosmos/cosmos-sdk/x/supply/client/rest"
+	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/okex/okexchain/app"
+	"github.com/okex/okexchain/app/crypto/ethsecp256k1"
+	"github.com/okex/okexchain/app/rpc"
+	"github.com/okex/okexchain/app/rpc/websockets"
 	ammswaprest "github.com/okex/okexchain/x/ammswap/client/rest"
 	backendrest "github.com/okex/okexchain/x/backend/client/rest"
 	dexrest "github.com/okex/okexchain/x/dex/client/rest"
@@ -17,6 +23,7 @@ import (
 	stakingrest "github.com/okex/okexchain/x/staking/client/rest"
 	"github.com/okex/okexchain/x/token"
 	tokensrest "github.com/okex/okexchain/x/token/client/rest"
+	"github.com/spf13/viper"
 )
 
 // registerRoutes registers the routes from the different modules for the LCD.
@@ -25,6 +32,7 @@ import (
 func registerRoutes(rs *lcd.RestServer) {
 	registerRoutesV1(rs)
 	registerRoutesV2(rs)
+	registerWeb3Rest(rs)
 }
 
 func registerRoutesV1(rs *lcd.RestServer) {
@@ -55,4 +63,34 @@ func registerRoutesV2(rs *lcd.RestServer) {
 	orderrest.RegisterRoutesV2(rs.CliCtx, v2Router)
 	tokensrest.RegisterRoutesV2(rs.CliCtx, v2Router, token.StoreKey)
 	backendrest.RegisterRoutesV2(rs.CliCtx, v2Router)
+}
+
+func registerWeb3Rest(rs *lcd.RestServer) {
+	ethServer := ethrpc.NewServer()
+	privkey, err := ethsecp256k1.GenerateKey()
+	if err != nil {
+		panic(err)
+	}
+
+	apis := rpc.GetAPIs(rs.CliCtx, privkey)
+	// Register all the APIs exposed by the namespace services
+	// TODO: handle allowlist and private APIs
+	for _, api := range apis {
+		if err := ethServer.RegisterName(api.Namespace, api.Service); err != nil {
+			panic(err)
+		}
+	}
+
+	// Web3 RPC API route
+	rs.Mux.HandleFunc("/", ethServer.ServeHTTP).Methods("POST", "OPTIONS")
+
+	// Register all other Cosmos routes
+	client.RegisterRoutes(rs.CliCtx, rs.Mux)
+	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
+	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
+
+	// start websockets server
+	websocketAddr := viper.GetString(server.FlagWebsocket)
+	ws := websockets.NewServer(rs.CliCtx, websocketAddr)
+	ws.Start()
 }
