@@ -56,11 +56,14 @@ type PublicFilterAPI struct {
 }
 
 // NewAPI returns a new PublicFilterAPI instance.
-func NewAPI(clientCtx clientcontext.CLIContext, backend Backend) *PublicFilterAPI {
+func NewAPI(clientCtx clientcontext.CLIContext, backend Backend, nodeStart bool) *PublicFilterAPI {
 	// start the client to subscribe to Tendermint events
-	err := clientCtx.Client.Start()
-	if err != nil {
-		panic(err)
+	// TODO: already start when nodeStart is true??!!!
+	if !nodeStart {
+		err := clientCtx.Client.Start()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	api := &PublicFilterAPI{

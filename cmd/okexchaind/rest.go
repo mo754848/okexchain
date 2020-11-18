@@ -30,9 +30,9 @@ import (
 // NOTE: details on the routes added for each module are in the module documentation
 // NOTE: If making updates here you also need to update the test helper in client/lcd/test_helper.go
 func registerRoutes(rs *lcd.RestServer) {
+	registerWeb3Rest(rs)
 	registerRoutesV1(rs)
 	registerRoutesV2(rs)
-	registerWeb3Rest(rs)
 }
 
 func registerRoutesV1(rs *lcd.RestServer) {
@@ -67,12 +67,9 @@ func registerRoutesV2(rs *lcd.RestServer) {
 
 func registerWeb3Rest(rs *lcd.RestServer) {
 	ethServer := ethrpc.NewServer()
-	privkey, err := ethsecp256k1.GenerateKey()
-	if err != nil {
-		panic(err)
-	}
+	var privkeys []ethsecp256k1.PrivKey
+	apis := rpc.GetAPIs(rs.CliCtx, true, privkeys...)
 
-	apis := rpc.GetAPIs(rs.CliCtx, privkey)
 	// Register all the APIs exposed by the namespace services
 	// TODO: handle allowlist and private APIs
 	for _, api := range apis {
