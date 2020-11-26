@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"math/big"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
@@ -24,7 +23,7 @@ type (
 	// storage type and that it doesn't contain the private key field.
 	GenesisAccount struct {
 		Address ethcmn.Address `json:"address"`
-		Balance *big.Int       `json:"balance"`
+		Balance sdk.Int        `json:"balance"`
 		Code    hexutil.Bytes  `json:"code,omitempty"`
 		Storage Storage        `json:"storage,omitempty"`
 	}
@@ -35,8 +34,8 @@ func (ga GenesisAccount) Validate() error {
 	if bytes.Equal(ga.Address.Bytes(), ethcmn.Address{}.Bytes()) {
 		return fmt.Errorf("address cannot be the zero address %s", ga.Address.String())
 	}
-	if ga.Balance == nil {
-		return errors.New("balance cannot be nil")
+	if ga.Balance.IsNil() || ga.Balance.IsNegative() {
+		return errors.New("balance cannot be nil or negative")
 	}
 	if ga.Balance.Sign() == -1 {
 		return errors.New("balance cannot be negative")

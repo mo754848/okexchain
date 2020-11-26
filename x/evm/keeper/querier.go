@@ -213,7 +213,7 @@ func queryExportAccount(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 
 	res := types.GenesisAccount{
 		Address: addr,
-		Balance: keeper.GetBalance(ctx, addr),
+		Balance: sdk.NewIntFromBigInt(keeper.GetBalance(ctx, addr)),
 		Code:    keeper.GetCode(ctx, addr),
 		Storage: storage,
 	}

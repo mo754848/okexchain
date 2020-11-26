@@ -13,7 +13,7 @@ import (
 func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) []abci.ValidatorUpdate {
 	for _, account := range data.Accounts {
 		// FIXME: this will override bank InitGenesis balance!
-		k.SetBalance(ctx, account.Address, account.Balance)
+		k.SetBalance(ctx, account.Address, account.Balance.BigInt())
 		k.SetCode(ctx, account.Address, account.Code)
 		for _, storage := range account.Storage {
 			k.SetState(ctx, account.Address, storage.Key, storage.Value)
@@ -69,7 +69,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper, ak types.AccountKeeper) GenesisSta
 
 		genAccount := types.GenesisAccount{
 			Address: addr,
-			Balance: k.GetBalance(ctx, addr),
+			Balance: sdk.NewIntFromBigInt(k.GetBalance(ctx, addr)),
 			Code:    k.GetCode(ctx, addr),
 			Storage: storage,
 		}
