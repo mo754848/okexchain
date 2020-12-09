@@ -82,7 +82,11 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 
 // Validate performs basic validation on evm parameters.
 func (p Params) Validate() error {
-	return sdk.ValidateDenom(p.EvmDenom)
+	if err := sdk.ValidateDenom(p.EvmDenom); err != nil {
+		return err
+	}
+
+	return validateEIPs(p.ExtraEIPs)
 }
 
 func validateEVMDenom(i interface{}) error {
