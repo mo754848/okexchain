@@ -13,6 +13,7 @@ import (
 	dexrest "github.com/okex/okexchain/x/dex/client/rest"
 	dist "github.com/okex/okexchain/x/distribution"
 	distrest "github.com/okex/okexchain/x/distribution/client/rest"
+	evmrest "github.com/okex/okexchain/x/evm/client/rest"
 	farmrest "github.com/okex/okexchain/x/farm/client/rest"
 	orderrest "github.com/okex/okexchain/x/order/client/rest"
 	stakingrest "github.com/okex/okexchain/x/staking/client/rest"
@@ -45,6 +46,7 @@ func registerRoutesV1(rs *lcd.RestServer) {
 	ammswaprest.RegisterRoutes(rs.CliCtx, v1Router)
 	supplyrest.RegisterRoutes(rs.CliCtx, v1Router)
 	farmrest.RegisterRoutes(rs.CliCtx, v1Router)
+	evmrest.RegisterRoutes(rs.CliCtx, v1Router)
 }
 
 func registerRoutesV2(rs *lcd.RestServer) {
