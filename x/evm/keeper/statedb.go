@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/okex/okexchain/x/evm/types"
@@ -257,4 +258,11 @@ func (k *Keeper) ForEachStorage(ctx sdk.Context, addr ethcmn.Address, cb func(ke
 // GetOrNewStateObject calls CommitStateDB.GetOrNetStateObject using the passed in context
 func (k *Keeper) GetOrNewStateObject(ctx sdk.Context, addr ethcmn.Address) types.StateObject {
 	return k.CommitStateDB.WithContext(ctx).GetOrNewStateObject(addr)
+}
+
+func (k *Keeper) PrintAll() {
+	fmt.Println("txCount", k.TxCount)
+	fmt.Println("bloom", ethtypes.BytesToBloom(k.Bloom.Bytes()))
+
+	k.CommitStateDB.PrintAll()
 }

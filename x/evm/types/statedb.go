@@ -945,3 +945,63 @@ type preimageEntry struct {
 	hash     ethcmn.Hash
 	preimage []byte
 }
+
+type mock struct {
+	// array that hold 'live' objects, which will get modified while processing a
+	// state transition
+	stateObjects         []stateEntry
+	addressToObjectIndex map[ethcmn.Address]int // map from address to the index of the state objects slice
+	stateObjectsDirty    map[ethcmn.Address]struct{}
+
+	// The refund counter, also used by state transitioning.
+	refund uint64
+
+	thash, bhash ethcmn.Hash
+	txIndex      int
+	logSize      uint
+
+	// TODO: Determine if we actually need this as we do not need preimages in
+	// the SDK, but it seems to be used elsewhere in Geth.
+	preimages           []preimageEntry
+	hashToPreimageIndex map[ethcmn.Hash]int // map from hash to the index of the preimages slice
+
+	// Journal of state modifications. This is the backbone of
+	// Snapshot and RevertToSnapshot.
+	journal        *journal
+	validRevisions []revision
+	nextRevisionID int
+
+	// Per-transaction access list
+	accessList *accessList
+}
+
+func (csdb *CommitStateDB) PrintAll() {
+	for i, stateEntry := range csdb.stateObjects {
+		fmt.Printf("stateObject %d, addr %s. obj: %+v\n", i, stateEntry.address.String(), stateEntry.stateObject)
+		fmt.Printf("acc:%s\n", stateEntry.stateObject.account.Address.String())
+	}
+
+	fmt.Println("addressToObjectIndex", csdb.addressToObjectIndex)
+	fmt.Println("stateObjectsDirty", csdb.stateObjectsDirty)
+
+	fmt.Println("refund", csdb.refund)
+	fmt.Println("thash", csdb.thash.String(), "bhash", csdb.bhash.String())
+	fmt.Println("txIndex", csdb.txIndex)
+	fmt.Println("logSize", csdb.logSize)
+
+	for i, p := range csdb.preimages {
+		fmt.Println("preimage", i, p.hash.String(), string(p.preimage))
+	}
+	fmt.Println("hashToPreimageIndex", csdb.hashToPreimageIndex)
+
+	for i, d := range csdb.journal.dirties {
+		fmt.Println("journal.dirties", i, d)
+	}
+	fmt.Println("journal.addressToJournalIndex", csdb.journal.addressToJournalIndex)
+	for i, v := range csdb.validRevisions {
+		fmt.Println("validRevision", i, v)
+	}
+	fmt.Println("nextRevisionID", csdb.nextRevisionID)
+
+	fmt.Println("accList.addresses", csdb.accessList.addresses, "accList.slots", csdb.accessList.slots)
+}
