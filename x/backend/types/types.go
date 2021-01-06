@@ -47,10 +47,11 @@ func (t *Ticker) GetTimestamp() int64 {
 	return t.Timestamp
 }
 
-func (t *Ticker) GetChannelInfo() (channel, filter string, err error) {
-	channel = "dex_spot/ticker"
-	filter = t.Product
-	return
+func (t *Ticker) GetChannelInfo() (ChannelInfo, error) {
+	return ChannelInfo{
+		Channel: "dex_spot/ticker",
+		Filter:  t.Product,
+	}, nil
 }
 
 func (t *Ticker) GetFullChannel() string {

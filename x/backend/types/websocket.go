@@ -7,10 +7,15 @@ import (
 const WebsocketChanCapacity = 2048
 
 type IWebsocket interface {
-	GetChannelInfo() (channel, filter string, err error)
+	GetChannelInfo() (channelInfo ChannelInfo, err error)
 	GetFullChannel() string
 	FormatResult() interface{}
 	GetTimestamp() int64
+}
+
+type ChannelInfo struct {
+	Channel string
+	Filter  string
 }
 
 // FakeWSEvent won't result in sending out tendermint event
@@ -28,8 +33,11 @@ func NewFakeWSEvent(channel, filter string, ts int64) *FakeWSEvent {
 	}
 }
 
-func (f *FakeWSEvent) GetChannelInfo() (channel, filter string, err error) {
-	return f.channel, f.filter, nil
+func (f *FakeWSEvent) GetChannelInfo() (channelInfo ChannelInfo, err error) {
+	return ChannelInfo{
+		Channel: f.channel,
+		Filter:  f.filter,
+	}, nil
 }
 
 func (f *FakeWSEvent) GetFullChannel() string {
@@ -58,8 +66,11 @@ func (m *MergedTickersEvent) GetFullChannel() string {
 	return fmt.Sprintf("dex_spot/all_ticker_%ds", m.freq)
 }
 
-func (m *MergedTickersEvent) GetChannelInfo() (channel, filter string, err error) {
-	return m.GetFullChannel(), "", nil
+func (m *MergedTickersEvent) GetChannelInfo() (ChannelInfo, error) {
+	return ChannelInfo{
+		Channel: m.GetFullChannel(),
+		Filter:  "",
+	}, nil
 }
 
 func NewMergedTickersEvent(ts int64, freq int, tickers []interface{}) *MergedTickersEvent {

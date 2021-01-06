@@ -137,22 +137,31 @@ type BaseKline struct {
 	impl      IKline
 }
 
-func (b *BaseKline) GetChannelInfo() (channel, filter string, err error) {
+func (b *BaseKline) GetChannelInfo() (ChannelInfo, error) {
 	if b.impl == nil {
-		return "", "", errors.New("failed to find channel because of no specific kline type found")
+		return ChannelInfo{
+			Channel: "",
+			Filter:  "",
+		}, errors.New("failed to find channel because of no specific kline type found")
 	}
 
 	channel, ok := kline2channel[b.impl.GetTableName()]
 	if !ok {
-		return "", "", errors.Errorf("failed to find channel for %s", b.GetTableName())
+		return ChannelInfo{
+			Channel: "",
+			Filter:  "",
+		}, errors.Errorf("failed to find channel for %s", b.GetTableName())
 	}
-	return channel, b.Product, nil
+	return ChannelInfo{
+		Channel: channel,
+		Filter:  b.Product,
+	}, nil
 }
 
 func (b *BaseKline) GetFullChannel() string {
-	channel, filter, e := b.GetChannelInfo()
-	if e == nil {
-		return channel + ":" + filter
+	channelInfo, err := b.GetChannelInfo()
+	if err == nil {
+		return channelInfo.Channel + ":" + channelInfo.Filter
 	} else {
 		return "InvalidChannelName"
 	}

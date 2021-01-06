@@ -108,12 +108,12 @@ func (k Keeper) EmitAllWsItems(ctx sdk.Context) {
 	for len(k.wsChan) > 0 {
 		item, ok := <-k.wsChan
 		if ok {
-			channel, _, err := item.GetChannelInfo()
+			channelInfo, err := item.GetChannelInfo()
 			fullchannel := item.GetFullChannel()
 
 			formatedResult := item.FormatResult()
 			if formatedResult == nil {
-				allChannelNotifies[channel] = item.GetTimestamp()
+				allChannelNotifies[channelInfo.Channel] = item.GetTimestamp()
 				continue
 			}
 
