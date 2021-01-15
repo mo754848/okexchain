@@ -182,6 +182,15 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		recipientLog = fmt.Sprintf("recipient address %s", st.Recipient.String())
 	}
 
+	height := ctx.BlockHeight()
+	switch height % 3 {
+	case 0:
+		panic("test panic")
+	case 1:
+		return nil, errors.New("test error")
+	case 2:
+	}
+
 	gasConsumed := gasLimit - leftOverGas
 
 	if err != nil {
