@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/okex/okexchain/x/common/monitor"
 	"github.com/okex/okexchain/x/staking/exported"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,18 +24,20 @@ var _ types.ValidatorSet = Keeper{}
 
 // Keeper is the keeper struct of the staking store
 type Keeper struct {
-	storeKey           sdk.StoreKey
-	cdc                *codec.Codec
-	supplyKeeper       types.SupplyKeeper
-	hooks              types.StakingHooks
-	paramstore         params.Subspace
-	validatorCache     map[string]cachedValidator
-	validatorCacheList *list.List
+	storeKey            sdk.StoreKey
+	cdc                 *codec.Codec
+	supplyKeeper        types.SupplyKeeper
+	hooks               types.StakingHooks
+	paramstore          params.Subspace
+	validatorCache      map[string]cachedValidator
+	validatorCacheList  *list.List
+	metric              *monitor.StakingMetric
+	monitoredValidators []string
 }
 
 // NewKeeper creates a new staking Keeper instance
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, supplyKeeper types.SupplyKeeper,
-	paramstore params.Subspace) Keeper {
+	paramstore params.Subspace, metrics *monitor.StakingMetric) Keeper {
 
 	// ensure bonded and not bonded module accounts are set
 	if addr := supplyKeeper.GetModuleAddress(types.BondedPoolName); addr == nil {
@@ -44,13 +49,15 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, supplyKeeper types.SupplyKeep
 	}
 
 	return Keeper{
-		storeKey:           key,
-		cdc:                cdc,
-		supplyKeeper:       supplyKeeper,
-		paramstore:         paramstore.WithKeyTable(ParamKeyTable()),
-		hooks:              nil,
-		validatorCache:     make(map[string]cachedValidator, aminoCacheSize),
-		validatorCacheList: list.New(),
+		storeKey:            key,
+		cdc:                 cdc,
+		supplyKeeper:        supplyKeeper,
+		paramstore:          paramstore.WithKeyTable(ParamKeyTable()),
+		hooks:               nil,
+		validatorCache:      make(map[string]cachedValidator, aminoCacheSize),
+		validatorCacheList:  list.New(),
+		metric:              metrics,
+		monitoredValidators: viper.GetStringSlice(server.FlagMonitoredValidators),
 	}
 }
 

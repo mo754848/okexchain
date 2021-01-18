@@ -6,6 +6,7 @@ import (
 
 var (
 	// init monitor prometheus metrics
-	orderMetrics  = monitor.DefaultOrderMetrics(monitor.DefaultPrometheusConfig())
-	streamMetrics = monitor.DefaultStreamMetrics(monitor.DefaultPrometheusConfig())
+	orderMetrics   = monitor.DefaultOrderMetrics(monitor.DefaultPrometheusConfig())
+	stakingMetrics = monitor.DefaultStakingMetric(monitor.DefaultPrometheusConfig())
+	streamMetrics  = monitor.DefaultStreamMetrics(monitor.DefaultPrometheusConfig())
 )
