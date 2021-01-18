@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/okex/okexchain/x/common"
 	"github.com/okex/okexchain/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -276,7 +277,7 @@ func (k Keeper) recordValidatorsPower(ctx sdk.Context) {
 	totalNewPower, totalControlledNewPower := int64(0), int64(0)
 	k.IterateLastValidatorPowers(ctx, func(operator sdk.ValAddress, power int64) (stop bool) {
 		totalNewPower += power
-		if index := stringsContains(k.monitoredValidators, operator.String()); index != -1 {
+		if index := common.StringsContains(k.monitoredValidators, operator.String()); index != -1 {
 			totalControlledNewPower += power
 		}
 		return false
@@ -284,13 +285,4 @@ func (k Keeper) recordValidatorsPower(ctx sdk.Context) {
 	k.metric.AllValidatorsShare.Set(float64(totalNewPower))
 	k.metric.ControlledValidatorsShare.Set(float64(totalControlledNewPower))
 	k.metric.ControlledValidatorsShareRatio.Set(float64(totalControlledNewPower)/float64(totalNewPower))
-}
-
-func stringsContains(array []string, val string) int {
-	for i := 0; i < len(array); i++ {
-		if array[i] == val {
-			return i
-		}
-	}
-	return -1
 }

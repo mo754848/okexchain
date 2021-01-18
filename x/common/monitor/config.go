@@ -5,6 +5,7 @@ const (
 	xNameSpace       = "x"
 	orderSubSystem   = "order"
 	stakingSubSystem = "staking"
+	distrSubSystem   = "distr"
 	streamSubSystem  = "stream"
 )
 

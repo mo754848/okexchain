@@ -217,7 +217,7 @@ func CreateTestInputAdvanced(t *testing.T, isCheckTx bool, initPower int64, comm
 	sk.SetParams(ctx, staking.DefaultParams())
 
 	keeper := NewKeeper(cdc, keyDistr, pk.Subspace(types.DefaultParamspace), sk, supplyKeeper,
-		auth.FeeCollectorName, blacklistedAddrs)
+		auth.FeeCollectorName, blacklistedAddrs, monitor.NopDistrMetric())
 
 	keeper.SetWithdrawAddrEnabled(ctx, true)
 	initCoins := sdk.NewCoins(sdk.NewCoin(sk.BondDenom(ctx), initTokens))

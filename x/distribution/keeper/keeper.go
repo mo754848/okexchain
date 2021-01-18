@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/okex/okexchain/x/common/monitor"
 	"github.com/okex/okexchain/x/params"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -22,13 +23,16 @@ type Keeper struct {
 	blacklistedAddrs map[string]bool
 
 	feeCollectorName string // name of the FeeCollector ModuleAccount
+
+	metric              *monitor.DistrMetric
+	monitoredValidators []string
 }
 
 // NewKeeper creates a new distribution Keeper instance
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace,
 	sk types.StakingKeeper, supplyKeeper types.SupplyKeeper, feeCollectorName string,
-	blacklistedAddrs map[string]bool,
+	blacklistedAddrs map[string]bool, metrics *monitor.DistrMetric,
 ) Keeper {
 
 	// ensure distribution module account is set
@@ -49,6 +53,7 @@ func NewKeeper(
 		supplyKeeper:     supplyKeeper,
 		feeCollectorName: feeCollectorName,
 		blacklistedAddrs: blacklistedAddrs,
+		metric:           metrics,
 	}
 }
 
