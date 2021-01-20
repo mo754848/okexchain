@@ -335,3 +335,15 @@ func StringsContains(array []string, val string) int {
 	}
 	return -1
 }
+
+func ConvertDecToFloat64(dec sdk.Dec) float64 {
+	if dec.IsZero() {
+		return 0.0
+	}
+	decStr := dec.String()
+	f, err := strconv.ParseFloat(decStr, 64)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
