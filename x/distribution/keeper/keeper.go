@@ -4,9 +4,11 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/okex/okexchain/x/common/monitor"
 	"github.com/okex/okexchain/x/params"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/okex/okexchain/x/distribution/types"
@@ -46,14 +48,15 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		storeKey:         key,
-		cdc:              cdc,
-		paramSpace:       paramSpace,
-		stakingKeeper:    sk,
-		supplyKeeper:     supplyKeeper,
-		feeCollectorName: feeCollectorName,
-		blacklistedAddrs: blacklistedAddrs,
-		metric:           metrics,
+		storeKey:            key,
+		cdc:                 cdc,
+		paramSpace:          paramSpace,
+		stakingKeeper:       sk,
+		supplyKeeper:        supplyKeeper,
+		feeCollectorName:    feeCollectorName,
+		blacklistedAddrs:    blacklistedAddrs,
+		metric:              metrics,
+		monitoredValidators: viper.GetStringSlice(server.FlagMonitoredValidators),
 	}
 }
 
