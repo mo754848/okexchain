@@ -42,9 +42,7 @@ func NewSwapTokenPair(quotePooledCoin sdk.SysCoin, basePooledCoin sdk.SysCoin, p
 
 // String implement fmt.Stringer
 func (s SwapTokenPair) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`QuotePooledCoin: %s
-BasePooledCoin: %s
-PoolTokenName: %s`, s.QuotePooledCoin.String(), s.BasePooledCoin.String(), s.PoolTokenName))
+	return strings.TrimSpace(fmt.Sprintf(`QuotePooledCoin: %s BasePooledCoin: %s PoolTokenName: %s`, s.QuotePooledCoin.String(), s.BasePooledCoin.String(), s.PoolTokenName))
 }
 
 // TokenPairName defines token pair

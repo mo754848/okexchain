@@ -39,6 +39,10 @@ type Keeper struct {
 	Cache        *cache.Cache          // Memory cache
 }
 
+func (k Keeper) SwapKeeper() types.SwapKeeper {
+	return k.swapKeeper
+}
+
 // NewKeeper creates new instances of the nameservice Keeper
 func NewKeeper(orderKeeper types.OrderKeeper, tokenKeeper types.TokenKeeper, dexKeeper types.DexKeeper, swapKeeper types.SwapKeeper,
 	farmKeeper types.FarmKeeper, mintKeeper types.MintKeeper, marketKeeper types.MarketKeeper, cdc *codec.Codec, logger log.Logger, cfg *config.Config) Keeper {
