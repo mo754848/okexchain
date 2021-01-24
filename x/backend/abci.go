@@ -16,7 +16,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	tokenPairName := "okt_usdt-a2b"
 	tokenPair, err := keeper.SwapKeeper().GetSwapTokenPair(ctx, tokenPairName)
 	if err == nil {
-		fmt.Printf("swap liquidity:block_height=%d,swap_token_pair:%s\n",
+		keeper.Logger.Info("swap liquidity:block_height=%d,swap_token_pair:%s\n",
 			ctx.BlockHeight(), tokenPair.String())
 	}
 
