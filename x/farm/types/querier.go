@@ -47,6 +47,7 @@ func NewQueryPoolsParams(page, limit int) QueryPoolsParams {
 type QueryPoolAccountParams struct {
 	PoolName   string
 	AccAddress sdk.AccAddress
+	IsAll      bool
 }
 
 // NewQueryPoolAccountParams creates a new instance of QueryPoolAccountParams

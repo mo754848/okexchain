@@ -2,10 +2,11 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	client "github.com/cosmos/cosmos-sdk/client/flags"
@@ -337,12 +338,21 @@ $ %s query farm lock-info pool-eth-xxb okexchain1hw4r48aww06ldrfeuq2v438ujnl6als
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			accAddr, err := sdk.AccAddressFromBech32(args[1])
-			if err != nil {
-				return err
+			var queryParam types.QueryPoolAccountParams
+			if args[1] == "all" {
+				queryParam = types.QueryPoolAccountParams{
+					PoolName: args[0],
+					IsAll:    true,
+				}
+			} else {
+				accAddr, err := sdk.AccAddressFromBech32(args[1])
+				if err != nil {
+					return err
+				}
+				queryParam = types.NewQueryPoolAccountParams(args[0], accAddr)
 			}
 
-			jsonBytes, err := cdc.MarshalJSON(types.NewQueryPoolAccountParams(args[0], accAddr))
+			jsonBytes, err := cdc.MarshalJSON(queryParam)
 			if err != nil {
 				return err
 			}

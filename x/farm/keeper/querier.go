@@ -119,12 +119,37 @@ func queryLockInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sd
 		return nil, defaultQueryErrParseParams(err)
 	}
 
+	if params.IsAll {
+		return getLockInfoAll(ctx, k, params)
+	}
+	return getLockInfoSingle(ctx, k, params)
+}
+
+func getLockInfoSingle(ctx sdk.Context, k Keeper, params types.QueryPoolAccountParams) ([]byte, sdk.Error) {
 	lockInfo, found := k.GetLockInfo(ctx, params.AccAddress, params.PoolName)
 	if !found {
 		return nil, types.ErrNoLockInfoFound(params.AccAddress.String(), params.PoolName)
 	}
 
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, lockInfo)
+	if err != nil {
+		return nil, defaultQueryErrJSONMarshal(err)
+	}
+
+	return res, nil
+}
+
+func getLockInfoAll(ctx sdk.Context, k Keeper, params types.QueryPoolAccountParams) ([]byte, sdk.Error) {
+	addrList := k.getAccountsLockedTo(ctx, params.PoolName)
+	var lockInfos []types.LockInfo
+	for _, addr := range addrList {
+		lockInfo, found := k.GetLockInfo(ctx, addr, params.PoolName)
+		if !found {
+			continue
+		}
+		lockInfos = append(lockInfos, lockInfo)
+	}
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, lockInfos)
 	if err != nil {
 		return nil, defaultQueryErrJSONMarshal(err)
 	}
