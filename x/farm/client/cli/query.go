@@ -363,9 +363,19 @@ $ %s query farm lock-info pool-eth-xxb okexchain1hw4r48aww06ldrfeuq2v438ujnl6als
 				return err
 			}
 
-			var lockInfo types.LockInfo
-			cdc.MustUnmarshalJSON(bz, &lockInfo)
-			return cliCtx.PrintOutput(lockInfo)
+			if queryParam.IsAll {
+				var lockInfos []types.LockInfo
+				cdc.MustUnmarshalJSON(bz, &lockInfos)
+				lockMap := make(map[string]sdk.Dec)
+				for _, lockInfo := range lockInfos {
+					lockMap[lockInfo.Owner.String()] = lockInfo.Amount.Amount
+				}
+				return cliCtx.PrintOutput(lockMap)
+			} else {
+				var lockInfo types.LockInfo
+				cdc.MustUnmarshalJSON(bz, &lockInfo)
+				return cliCtx.PrintOutput(lockInfo)
+			}
 		},
 	}
 }
