@@ -36,6 +36,9 @@ const (
 
 	// sort direction
 	FarmSortAsc = "asc"
+
+	FarmFirstPoolName    = "1st_pool_okt_usdt"
+	FarmFirstPoolStateAt = 1611309600
 )
 
 // nolint

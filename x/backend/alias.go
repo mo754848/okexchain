@@ -47,5 +47,6 @@ var (
 
 	NewORM = orm.New
 
-	DefaultConfig = config.DefaultConfig
+	DefaultConfig            = config.DefaultConfig
+	CalculateAmountToDollars = keeper.CalculateAmountToDollars
 )

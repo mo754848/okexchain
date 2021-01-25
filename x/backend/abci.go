@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/okex/okexchain/x/farm"
+
 	"github.com/okex/okexchain/x/backend/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,6 +31,25 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		keeper.Flush()
 		keeper.Logger.Debug(fmt.Sprintf("end backend endblocker: block---%d", ctx.BlockHeight()))
 	}
+	moduleAcc := keeper.FarmKeeper().SupplyKeeper().GetModuleAccount(ctx, farm.MintFarmingAccount)
+	farmAmount := moduleAcc.GetCoins().AmountOf(sdk.DefaultBondDenom)
+	farmApy := sdk.ZeroDec()
+	if farmAmount.GT(keeper.Cache.FarmFirstPoolAmount) {
+		keeper.Cache.FarmFirstPoolAmount = farmAmount
+
+		// query farm pool
+		farmPool, found := keeper.FarmKeeper().GetFarmPool(ctx, types.FarmFirstPoolName)
+		if found {
+			farmAmountDollars := CalculateAmountToDollars(ctx, keeper, sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, farmAmount))
+			totalStaked := keeper.FarmKeeper().GetPoolLockedValue(ctx, farmPool)
+			if !totalStaked.IsZero() {
+				farmApy = farmAmountDollars.Quo(totalStaked).QuoInt64(ctx.BlockTime().Unix() - types.FarmFirstPoolStateAt).MulInt64(types.SecondsInADay).MulInt64(types.DaysInYear)
+			}
+			keeper.Cache.FarmFirstPoolApy = farmApy
+		}
+	}
+	keeper.Logger.Info(fmt.Sprintf("backend endblocker: block---%d, farmAmount---%s, farmApy---%s",
+		ctx.BlockHeight(), farmAmount.String(), farmApy.String()))
 }
 
 func storeSwapInfos(keeper Keeper) {

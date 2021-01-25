@@ -1,6 +1,10 @@
 package cache
 
-import "github.com/okex/okexchain/x/backend/types"
+import (
+	"github.com/okex/okexchain/x/backend/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // Cache defines struct to store data in memory
 type Cache struct {
@@ -13,15 +17,20 @@ type Cache struct {
 	// swap infos, flush at EndBlocker
 	swapInfos  []*types.SwapInfo
 	claimInfos []*types.ClaimInfo
+
+	FarmFirstPoolAmount sdk.Dec
+	FarmFirstPoolApy    sdk.Dec
 }
 
 // NewCache return  cache pointer address, called at NewKeeper
 func NewCache() *Cache {
 	return &Cache{
-		Transactions: make([]*types.Transaction, 0, 2000),
-		LatestTicker: make(map[string]*types.Ticker),
-		swapInfos:    make([]*types.SwapInfo, 0, 2000),
-		claimInfos:   make([]*types.ClaimInfo, 0, 2000),
+		Transactions:        make([]*types.Transaction, 0, 2000),
+		LatestTicker:        make(map[string]*types.Ticker),
+		swapInfos:           make([]*types.SwapInfo, 0, 2000),
+		claimInfos:          make([]*types.ClaimInfo, 0, 2000),
+		FarmFirstPoolAmount: sdk.ZeroDec(),
+		FarmFirstPoolApy:    sdk.ZeroDec(),
 	}
 }
 
