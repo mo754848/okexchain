@@ -34,7 +34,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	moduleAcc := keeper.FarmKeeper().SupplyKeeper().GetModuleAccount(ctx, farm.MintFarmingAccount)
 	farmAmount := moduleAcc.GetCoins().AmountOf(sdk.DefaultBondDenom)
 	farmApy := sdk.ZeroDec()
-	if farmAmount.GT(keeper.Cache.FarmFirstPoolAmount) {
+	if keeper.Config.EnableBackend && farmAmount.GT(keeper.Cache.FarmFirstPoolAmount) {
 		keeper.Cache.FarmFirstPoolAmount = farmAmount
 
 		// query farm pool
