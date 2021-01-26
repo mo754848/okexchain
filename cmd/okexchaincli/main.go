@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	debugcli "github.com/okex/okexchain/x/debug/client/cli"
+
 	"github.com/spf13/cobra"
 
 	tmamino "github.com/tendermint/tendermint/crypto/encoding/amino"
@@ -98,6 +100,7 @@ func queryCmd(cdc *sdkcodec.Codec) *cobra.Command {
 		authcmd.QueryTxsByEventsCmd(cdc),
 		authcmd.QueryTxCmd(cdc),
 		flags.LineBreak,
+		debugcli.GetDebugCmd(cdc),
 	)
 
 	// add modules' query commands

@@ -1,6 +1,8 @@
 package farm
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/okex/okexchain/x/farm/keeper"
 	"github.com/okex/okexchain/x/farm/types"
@@ -134,6 +136,12 @@ func handleMsgUnlock(ctx sdk.Context, k keeper.Keeper, msg types.MsgUnlock) (*sd
 
 	// 7. notify backend
 	k.OnClaim(ctx, msg.Address, pool.Name, rewards)
+
+	moduleAcc := k.SupplyKeeper().GetModuleAccount(ctx, MintFarmingAccount)
+	yieldedNativeTokenAmt := moduleAcc.GetCoins().AmountOf(sdk.DefaultBondDenom)
+
+	k.Logger(ctx).Debug(fmt.Sprintf("farm unlock: block---%d, address---%s, unlock_amount---%s, pool_staked_amount---%s, yielded_amount---%s",
+		ctx.BlockHeight(), msg.Address.String(), msg.Amount.Amount.String(), pool.TotalValueLocked.Amount.String(), yieldedNativeTokenAmt.String()))
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeUnlock,

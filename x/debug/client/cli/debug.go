@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/okex/okexchain/x/debug/types"
@@ -21,7 +22,7 @@ func GetDebugCmd(cdc *codec.Codec) *cobra.Command {
 		Short: "Debugging subcommands",
 	}
 
-	queryCmd.AddCommand(client.GetCommands(
+	queryCmd.AddCommand(flags.GetCommands(
 		CmdSetLogLevel(queryRoute, cdc),
 		CmdDumpStore(queryRoute, cdc),
 		CmdSanityCheck(queryRoute, cdc),
