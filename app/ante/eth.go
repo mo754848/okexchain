@@ -101,7 +101,7 @@ func (emfd EthMempoolFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 	evmDenom := emfd.evmKeeper.GetParams(ctx).EvmDenom
 
 	// fee = gas price * gas limit
-	fee := sdk.NewInt64DecCoin(evmDenom, msgEthTx.Fee().Int64())
+	fee := sdk.NewDecCoin(evmDenom, sdk.NewIntFromBigInt(msgEthTx.Fee()))
 
 	minGasPrices := ctx.MinGasPrices()
 	minFees := minGasPrices.AmountOf(evmDenom).MulInt64(int64(msgEthTx.Data.GasLimit))
@@ -257,7 +257,7 @@ func (nvd NonceVerificationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 	// if multiple transactions are submitted in succession with increasing nonces,
 	// all will be rejected except the first, since the first needs to be included in a block
 	// before the sequence increments
-	if msgEthTx.Data.AccountNonce < seq {
+	if msgEthTx.Data.AccountNonce != seq {
 		return ctx, sdkerrors.Wrapf(
 			sdkerrors.ErrInvalidSequence,
 			"invalid nonce; got %d, expected %d", msgEthTx.Data.AccountNonce, seq,

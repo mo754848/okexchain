@@ -101,6 +101,8 @@ func New(enableLog bool, engineInfo *OrmEngineInfo, logger *log.Logger) (m *ORM,
 	orm.db.AutoMigrate(&types.Order{})
 	orm.db.AutoMigrate(&types.Transaction{})
 	orm.db.AutoMigrate(&types.SwapInfo{})
+	orm.db.AutoMigrate(&types.SwapWhitelist{})
+	orm.db.AutoMigrate(&types.ClaimInfo{})
 
 	allKlinesMap := types.GetAllKlineMap()
 	for _, v := range allKlinesMap {
@@ -1169,6 +1171,24 @@ func (orm *ORM) GetOrderList(address, product, side string, open bool, offset, l
 	return orders, total
 }
 
+func (orm *ORM) GetAccountOrders(address string, startTS, endTS int64, offset, limit int) ([]types.Order, int) {
+	var orders []types.Order
+
+	if endTS == 0 {
+		endTS = time.Now().Unix()
+	}
+
+	query := orm.db.Model(types.Order{}).Where("sender = ? AND timestamp >= ? AND timestamp < ?", address, startTS, endTS)
+	var total int
+	query.Count(&total)
+	if offset >= total {
+		return orders, total
+	}
+
+	query.Order("timestamp desc").Offset(offset).Limit(limit).Find(&orders)
+	return orders, total
+}
+
 // AddTransactions insert into transactions, return count
 func (orm *ORM) AddTransactions(transactions []*types.Transaction) (addedCnt int, err error) {
 	orm.singleEntryLock.Lock()
@@ -1219,7 +1239,7 @@ func (orm *ORM) GetTransactionList(address string, txType, startTime, endTime in
 
 // BatchInsertOrUpdate return map mean success or fail
 func (orm *ORM) BatchInsertOrUpdate(newOrders []*types.Order, updatedOrders []*types.Order, deals []*types.Deal, mrs []*types.MatchResult,
-	feeDetails []*token.FeeDetail, trxs []*types.Transaction, swapInfos []*types.SwapInfo) (resultMap map[string]int, err error) {
+	feeDetails []*token.FeeDetail, trxs []*types.Transaction, swapInfos []*types.SwapInfo, claimInfos []*types.ClaimInfo) (resultMap map[string]int, err error) {
 
 	orm.singleEntryLock.Lock()
 	defer orm.singleEntryLock.Unlock()
@@ -1235,6 +1255,7 @@ func (orm *ORM) BatchInsertOrUpdate(newOrders []*types.Order, updatedOrders []*t
 	resultMap["transactions"] = 0
 	resultMap["matchResults"] = 0
 	resultMap["swapInfos"] = 0
+	resultMap["claimInfos"] = 0
 
 	// 1. Batch Insert Orders.
 	orderVItems := []string{}
@@ -1336,6 +1357,18 @@ func (orm *ORM) BatchInsertOrUpdate(newOrders []*types.Order, updatedOrders []*t
 				return resultMap, ret.Error
 			} else {
 				resultMap["swapInfos"] += 1
+			}
+		}
+	}
+
+	// 6. insert claim infos
+	for _, claimInfo := range claimInfos {
+		if claimInfo != nil {
+			ret := trx.Create(claimInfo)
+			if ret.Error != nil {
+				return resultMap, ret.Error
+			} else {
+				resultMap["claimInfos"] += 1
 			}
 		}
 	}

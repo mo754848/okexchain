@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	evmtypes "github.com/okex/okexchain/x/evm/types"
+
 	"github.com/okex/okexchain/app/ante"
 	okexchaincodec "github.com/okex/okexchain/app/codec"
 	okexchain "github.com/okex/okexchain/app/types"
@@ -154,7 +156,7 @@ type OKExChainApp struct {
 	UpgradeKeeper  upgrade.Keeper
 	ParamsKeeper   params.Keeper
 	EvidenceKeeper evidence.Keeper
-	EvmKeeper      evm.Keeper
+	EvmKeeper      *evm.Keeper
 	TokenKeeper    token.Keeper
 	DexKeeper      dex.Keeper
 	OrderKeeper    order.Keeper
@@ -262,8 +264,7 @@ func NewOKExChainApp(
 	)
 	app.UpgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], app.cdc)
 	app.EvmKeeper = evm.NewKeeper(
-		app.cdc, keys[evm.StoreKey], app.subspaces[evm.ModuleName], app.AccountKeeper,
-	)
+		app.cdc, keys[evm.StoreKey], app.subspaces[evm.ModuleName], app.AccountKeeper, app.SupplyKeeper, app.BankKeeper)
 
 	app.TokenKeeper = token.NewKeeper(app.BankKeeper, app.subspaces[token.ModuleName], auth.FeeCollectorName, app.SupplyKeeper,
 		keys[token.StoreKey], keys[token.KeyLock],
@@ -279,14 +280,14 @@ func NewOKExChainApp(
 
 	app.SwapKeeper = ammswap.NewKeeper(app.SupplyKeeper, app.TokenKeeper, app.cdc, app.keys[ammswap.StoreKey], app.subspaces[ammswap.ModuleName])
 
-	app.StreamKeeper = stream.NewKeeper(app.OrderKeeper, app.TokenKeeper, &app.DexKeeper, &app.AccountKeeper, &app.SwapKeeper,
-		app.cdc, logger, appConfig, streamMetrics)
-
-	app.BackendKeeper = backend.NewKeeper(app.OrderKeeper, app.TokenKeeper, &app.DexKeeper, &app.SwapKeeper, app.StreamKeeper.GetMarketKeeper(),
-		app.cdc, logger, appConfig.BackendConfig)
-
 	app.FarmKeeper = farm.NewKeeper(auth.FeeCollectorName, app.SupplyKeeper, app.TokenKeeper, app.SwapKeeper, app.subspaces[farm.StoreKey],
 		app.keys[farm.StoreKey], app.cdc)
+
+	app.StreamKeeper = stream.NewKeeper(app.OrderKeeper, app.TokenKeeper, &app.DexKeeper, &app.AccountKeeper, &app.SwapKeeper,
+		&app.FarmKeeper, app.cdc, logger, appConfig, streamMetrics)
+	app.BackendKeeper = backend.NewKeeper(app.OrderKeeper, app.TokenKeeper, &app.DexKeeper, &app.SwapKeeper, &app.FarmKeeper,
+		app.MintKeeper, app.StreamKeeper.GetMarketKeeper(), app.cdc, logger, appConfig.BackendConfig)
+
 	// create evidence keeper with router
 	evidenceKeeper := evidence.NewKeeper(
 		cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName], &app.StakingKeeper, app.SlashingKeeper,
@@ -534,7 +535,7 @@ func validateMsgHook(orderKeeper order.Keeper) ante.ValidateMsgHandler {
 	return func(newCtx sdk.Context, msgs []sdk.Msg) error {
 
 		wrongMsgErr := sdk.ErrUnknownRequest(
-			"It is not allowed that a transaction with more than one message contains placeOrder or cancelOrder message")
+			"It is not allowed that a transaction with more than one message contains order or evm message")
 		var err error
 
 		for _, msg := range msgs {
@@ -549,6 +550,14 @@ func validateMsgHook(orderKeeper order.Keeper) ante.ValidateMsgHandler {
 					return wrongMsgErr
 				}
 				err = order.ValidateMsgCancelOrders(newCtx, orderKeeper, assertedMsg)
+			case evmtypes.MsgEthereumTx:
+				if len(msgs) > 1 {
+					return wrongMsgErr
+				}
+			case evmtypes.MsgEthermint:
+				if len(msgs) > 1 {
+					return wrongMsgErr
+				}
 			}
 
 			if err != nil {

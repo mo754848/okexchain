@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	cmserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/viper"
 
 	"github.com/okex/okexchain/app/crypto/ethsecp256k1"
@@ -94,7 +95,7 @@ func (api *PublicEthereumAPI) GetKeyringInfo() error {
 	keybase, err := keys.NewKeyring(
 		sdk.KeyringServiceName(),
 		viper.GetString(flags.FlagKeyringBackend),
-		viper.GetString(flags.FlagHome),
+		viper.GetString(cmserver.FlagUlockKeyHome),
 		api.clientCtx.Input,
 		hd.EthSecp256k1Options()...,
 	)
@@ -472,6 +473,10 @@ func (api *PublicEthereumAPI) SendTransaction(args rpctypes.SendTxArgs) (common.
 		return common.Hash{}, err
 	}
 
+	if res.Code != abci.CodeTypeOK {
+		return common.Hash{}, fmt.Errorf(res.RawLog)
+	}
+
 	// Return transaction hash
 	return common.HexToHash(res.TxHash), nil
 }
@@ -501,6 +506,9 @@ func (api *PublicEthereumAPI) SendRawTransaction(data hexutil.Bytes) (common.Has
 		return common.Hash{}, err
 	}
 
+	if res.Code != abci.CodeTypeOK {
+		return common.Hash{}, fmt.Errorf(res.RawLog)
+	}
 	// Return transaction hash
 	return common.HexToHash(res.TxHash), nil
 }
@@ -1000,15 +1008,16 @@ func (api *PublicEthereumAPI) generateFromArgs(args rpctypes.SendTxArgs) (*evmty
 		gasPrice = big.NewInt(ethermint.DefaultGasPrice)
 	}
 
-	if args.Nonce == nil {
-		// get the nonce from the account retriever and the pending transactions
-		nonce, err = api.accountNonce(api.clientCtx, args.From, true)
-	} else {
-		nonce = (uint64)(*args.Nonce)
-	}
-
+	// get the nonce from the account retriever and the pending transactions
+	nonce, err = api.accountNonce(api.clientCtx, args.From, true)
 	if err != nil {
 		return nil, err
+	}
+
+	if args.Nonce != nil {
+		if nonce != (uint64)(*args.Nonce) {
+			return nil, fmt.Errorf(fmt.Sprintf("invalid nonce; got %d, expected %d", (uint64)(*args.Nonce), nonce))
+		}
 	}
 
 	if args.Data != nil && args.Input != nil && !bytes.Equal(*args.Data, *args.Input) {
