@@ -13,6 +13,13 @@ import (
 
 // EndBlocker called every block, check expired orders
 func EndBlocker(ctx sdk.Context, keeper Keeper) {
+
+	tokenPairs := keeper.SwapKeeper().GetSwapTokenPairs(ctx)
+	for _, tokenPair := range tokenPairs {
+		keeper.Logger.Info(fmt.Sprintf("swap liquidity:block_height=%d,swap_token_pair:%s\n",
+			ctx.BlockHeight(), tokenPair.String()))
+	}
+
 	if keeper.Config.EnableBackend && keeper.Config.EnableMktCompute {
 		keeper.Logger.Debug(fmt.Sprintf("begin backend endblocker: block---%d", ctx.BlockHeight()))
 

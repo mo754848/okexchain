@@ -87,6 +87,10 @@ func NewKeeper(orderKeeper types.OrderKeeper, tokenKeeper types.TokenKeeper, dex
 	return k
 }
 
+func (k Keeper) SwapKeeper() types.SwapKeeper {
+	return k.swapKeeper
+}
+
 func (k Keeper) pushWSItem(obj types.IWebsocket) {
 	if k.wsChan != nil {
 		k.Logger.Debug("pushWSItem", "typeof(obj)", reflect.TypeOf(obj))
