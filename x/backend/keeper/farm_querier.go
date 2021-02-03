@@ -52,6 +52,8 @@ func queryFarmPools(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 		}
 	}
 
+	blockTime := getBlockTime(ctx)
+	blocksPerDay := int64(types.SecondsInADay / blockTime)
 	allPoolStaked := sdk.ZeroDec()
 	// response
 	responseList := make(types.FarmResponseList, len(farmPools))
@@ -62,9 +64,9 @@ func queryFarmPools(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 		startAt := calculateFarmPoolStartAt(ctx, farmPool)
 		finishAt := calculateFarmPoolFinishAt(ctx, keeper, farmPool, startAt)
 		// calculate pool rate and farm apy
-		yieldedInDay := farmPool.YieldedTokenInfos[0].AmountYieldedPerBlock.MulInt64(int64(types.BlocksPerDay))
+		yieldedInDay := farmPool.YieldedTokenInfos[0].AmountYieldedPerBlock.MulInt64(blocksPerDay)
 		poolRate := sdk.NewDecCoinsFromDec(farmPool.YieldedTokenInfos[0].RemainingAmount.Denom, yieldedInDay)
-		apy := calculateFarmApy(ctx, keeper, farmPool, totalStakedDollars)
+		apy := calculateFarmApy(ctx, keeper, farmPool, totalStakedDollars, blocksPerDay)
 		farmApy := sdk.NewDecCoinsFromDec(farmPool.YieldedTokenInfos[0].RemainingAmount.Denom, apy)
 		status := getFarmPoolStatus(startAt, finishAt, farmPool)
 		responseList[i] = types.FarmPoolResponse{
@@ -87,7 +89,7 @@ func queryFarmPools(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 	// calculate pool rate and apy in whitelist
 	if queryParams.PoolType == types.WhitelistFarmPool && allPoolStaked.IsPositive() && keeper.farmKeeper.GetParams(ctx).YieldNativeToken {
 		yieldedNativeTokenPerBlock := keeper.mintKeeper.GetParams(ctx).FarmProportion
-		yieldedNativeTokenPerDay := yieldedNativeTokenPerBlock.MulInt64(types.BlocksPerDay)
+		yieldedNativeTokenPerDay := yieldedNativeTokenPerBlock.MulInt64(blocksPerDay)
 		for i, poolResponse := range responseList {
 			nativeTokenRate := sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, yieldedNativeTokenPerDay.Mul(poolResponse.TotalStaked.Quo(allPoolStaked)))
 			responseList[i].PoolRate = poolResponse.PoolRate.Add(nativeTokenRate)
@@ -176,6 +178,8 @@ func queryFarmDashboard(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 			claimedMap[claimInfo.PoolName] = claimed
 		}
 	}
+	blockTime := getBlockTime(ctx)
+	blocksPerDay := int64(types.SecondsInADay / blockTime)
 	// response
 	responseList := types.FarmResponseList{}
 	hasWhiteList := false
@@ -204,9 +208,9 @@ func queryFarmDashboard(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 		startAt := calculateFarmPoolStartAt(ctx, farmPool)
 		finishAt := calculateFarmPoolFinishAt(ctx, keeper, farmPool, startAt)
 		// calculate pool rate and farm apy
-		yieldedInDay := farmPool.YieldedTokenInfos[0].AmountYieldedPerBlock.MulInt64(int64(types.BlocksPerDay))
+		yieldedInDay := farmPool.YieldedTokenInfos[0].AmountYieldedPerBlock.MulInt64(blocksPerDay)
 		poolRate := sdk.NewDecCoinsFromDec(farmPool.YieldedTokenInfos[0].RemainingAmount.Denom, yieldedInDay)
-		apy := calculateFarmApy(ctx, keeper, farmPool, totalStakedDollars)
+		apy := calculateFarmApy(ctx, keeper, farmPool, totalStakedDollars, blocksPerDay)
 		farmApy := sdk.NewDecCoinsFromDec(farmPool.YieldedTokenInfos[0].RemainingAmount.Denom, apy)
 
 		// calculate total farmed and claim infos
@@ -244,7 +248,7 @@ func queryFarmDashboard(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 	// calculate whitelist apy
 	if hasWhiteList && keeper.farmKeeper.GetParams(ctx).YieldNativeToken {
 		yieldedNativeTokenPerBlock := keeper.mintKeeper.GetParams(ctx).FarmProportion
-		yieldedNativeTokenPerDay := yieldedNativeTokenPerBlock.MulInt64(types.BlocksPerDay)
+		yieldedNativeTokenPerDay := yieldedNativeTokenPerBlock.MulInt64(blocksPerDay)
 		whitelistTotalStaked := calculateWhitelistTotalStaked(ctx, keeper, whitelist)
 		if whitelistTotalStaked.IsPositive() {
 			for i, poolResponse := range responseList {
@@ -298,6 +302,8 @@ func queryFarmMaxApy(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 	// whitelist
 	whitelist := keeper.farmKeeper.GetWhitelist(ctx)
 	apyMap := make(map[string]sdk.Dec, len(whitelist))
+	blockTime := getBlockTime(ctx)
+	blocksPerDay := int64(types.SecondsInADay / blockTime)
 	allPoolStaked := sdk.ZeroDec()
 	var responseList types.FarmResponseList
 	for _, poolName := range whitelist {
@@ -306,7 +312,7 @@ func queryFarmMaxApy(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 			continue
 		}
 		totalStakedDollars := keeper.farmKeeper.GetPoolLockedValue(ctx, pool)
-		apy := calculateFarmApy(ctx, keeper, pool, totalStakedDollars)
+		apy := calculateFarmApy(ctx, keeper, pool, totalStakedDollars, blocksPerDay)
 		apyMap[poolName] = apy
 		allPoolStaked = allPoolStaked.Add(totalStakedDollars)
 		responseList = append(responseList, types.FarmPoolResponse{
@@ -318,7 +324,7 @@ func queryFarmMaxApy(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 	// calculate native token farmed apy
 	if allPoolStaked.IsPositive() && keeper.farmKeeper.GetParams(ctx).YieldNativeToken {
 		yieldedNativeTokenPerBlock := keeper.mintKeeper.GetParams(ctx).FarmProportion
-		yieldedNativeTokenPerDay := yieldedNativeTokenPerBlock.MulInt64(types.BlocksPerDay)
+		yieldedNativeTokenPerDay := yieldedNativeTokenPerBlock.MulInt64(blocksPerDay)
 		for _, poolResponse := range responseList {
 			nativeTokenRate := sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, yieldedNativeTokenPerDay.Mul(poolResponse.TotalStaked.Quo(allPoolStaked)))
 			nativeTokenToDollarsPerDay := calculateAmountToDollars(ctx, keeper, sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, nativeTokenRate.Amount))
@@ -521,12 +527,12 @@ func getFarmPoolStatus(startAt int64, finishAt int64, farmPool farm.FarmPool) ty
 	return types.FarmPoolFinished
 }
 
-func calculateFarmApy(ctx sdk.Context, keeper Keeper, farmPool farm.FarmPool, totalStakedDollars sdk.Dec) sdk.Dec {
+func calculateFarmApy(ctx sdk.Context, keeper Keeper, farmPool farm.FarmPool, totalStakedDollars sdk.Dec, blocksPerDay int64) sdk.Dec {
 	if farmPool.YieldedTokenInfos[0].AmountYieldedPerBlock.IsZero() || farmPool.TotalValueLocked.Amount.IsZero() {
 		return sdk.ZeroDec()
 	}
 
-	yieldedInDay := farmPool.YieldedTokenInfos[0].AmountYieldedPerBlock.MulInt64(int64(types.BlocksPerDay))
+	yieldedInDay := farmPool.YieldedTokenInfos[0].AmountYieldedPerBlock.MulInt64(blocksPerDay)
 	yieldedDollarsInDay := calculateAmountToDollars(ctx, keeper,
 		sdk.NewDecCoinFromDec(farmPool.YieldedTokenInfos[0].RemainingAmount.Denom, yieldedInDay))
 	if !totalStakedDollars.IsZero() && !yieldedDollarsInDay.IsZero() {
@@ -629,4 +635,68 @@ func queryFarmFirstPool(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 		return nil, common.ErrMarshalJSONFailed(err.Error())
 	}
 	return bz, nil
+}
+
+func getBlockTime(ctx sdk.Context) float64 {
+	timeNow := ctx.BlockTime().Unix()
+	switch {
+	case timeNow < 1612454400: //2021-02-05 00:00:00
+		return 3.025
+	case timeNow < 1612540800: //2021-02-06 00:00:00
+		return 3.05
+	case timeNow < 1612627200: //2021-02-07 00:00:00
+		return 3.075
+	case timeNow < 1612713600: //2021-02-08 00:00:00
+		return 3.1
+	case timeNow < 1612800000: //2021-02-09 00:00:00
+		return 3.125
+	case timeNow < 1612886400: //2021-02-10 00:00:00
+		return 3.15
+	case timeNow < 1612972800: //2021-02-11 00:00:00
+		return 3.175
+	case timeNow < 1613059200: //2021-02-12 00:00:00
+		return 3.2
+	case timeNow < 1613145600: //2021-02-13 00:00:00
+		return 3.225
+	case timeNow < 1613232000: //2021-02-14 00:00:00
+		return 3.25
+	case timeNow < 1613318400: //2021-02-15 00:00:00
+		return 3.275
+	case timeNow < 1613404800: //2021-02-16 00:00:00
+		return 3.3
+	case timeNow < 1613491200: //2021-02-17 00:00:00
+		return 3.325
+	case timeNow < 1613577600: //2021-02-18 00:00:00
+		return 3.35
+	case timeNow < 1613664000: //2021-02-19 00:00:00
+		return 3.375
+	case timeNow < 1613750400: //2021-02-20 00:00:00
+		return 3.4
+	case timeNow < 1613836800: //2021-02-21 00:00:00
+		return 3.425
+	case timeNow < 1613923200: //2021-02-22 00:00:00
+		return 3.45
+	case timeNow < 1614009600: //2021-02-23 00:00:00
+		return 3.475
+	case timeNow < 1614096000: //2021-02-24 00:00:00
+		return 3.5
+	case timeNow < 1614182400: //2021-02-25 00:00:00
+		return 3.525
+	case timeNow < 1614268800: //2021-02-26 00:00:00
+		return 3.55
+	case timeNow < 1614355200: //2021-02-27 00:00:00
+		return 3.575
+	case timeNow < 1614441600: //2021-02-28 00:00:00
+		return 3.6
+	case timeNow < 1614528000: //2021-03-01 00:00:00
+		return 3.625
+	case timeNow < 1614614400: //2021-03-02 00:00:00
+		return 3.65
+	case timeNow < 1614700800: //2021-03-03 00:00:00
+		return 3.675
+	case timeNow < 1614787200: //2021-03-04 00:00:00
+		return 3.7
+	default:
+		return 3.7
+	}
 }
