@@ -86,15 +86,15 @@ func ExportGenesis(ctx sdk.Context, k Keeper, ak types.AccountKeeper) GenesisSta
 
 		addr := ethAccount.EthAddress()
 
-		storage, err := k.GetAccountStorage(ctx, addr)
-		if err != nil {
-			panic(err)
-		}
+		//storage, err := k.GetAccountStorage(ctx, addr)
+		//if err != nil {
+		//	panic(err)
+		//}
 
 		genAccount := types.GenesisAccount{
 			Address: addr.String(),
-			Code:    k.GetCode(ctx, addr),
-			Storage: storage,
+			//Code:    k.GetCode(ctx, addr),
+			//Storage: storage,
 		}
 
 		ethGenAccounts = append(ethGenAccounts, genAccount)
@@ -105,7 +105,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper, ak types.AccountKeeper) GenesisSta
 
 	return GenesisState{
 		Accounts:    ethGenAccounts,
-		TxsLogs:     k.GetAllTxLogs(ctx),
+		//TxsLogs:     k.GetAllTxLogs(ctx),
 		ChainConfig: config,
 		Params:      k.GetParams(ctx),
 	}
