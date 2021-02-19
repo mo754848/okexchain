@@ -2,7 +2,6 @@ package evm
 
 import (
 	"fmt"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -76,36 +75,36 @@ func InitGenesis(ctx sdk.Context, k Keeper, accountKeeper types.AccountKeeper, d
 // ExportGenesis exports genesis state of the EVM module
 func ExportGenesis(ctx sdk.Context, k Keeper, ak types.AccountKeeper) GenesisState {
 	// nolint: prealloc
-	var ethGenAccounts []types.GenesisAccount
-	ak.IterateAccounts(ctx, func(account authexported.Account) bool {
-		ethAccount, ok := account.(*ethermint.EthAccount)
-		if !ok {
-			// ignore non EthAccounts
-			return false
-		}
-
-		addr := ethAccount.EthAddress()
-
-		storage, err := k.GetAccountStorage(ctx, addr)
-		if err != nil {
-			panic(err)
-		}
-
-		genAccount := types.GenesisAccount{
-			Address: addr.String(),
-			Code:    k.GetCode(ctx, addr),
-			Storage: storage,
-		}
-
-		ethGenAccounts = append(ethGenAccounts, genAccount)
-		return false
-	})
+	//var ethGenAccounts []types.GenesisAccount
+	//ak.IterateAccounts(ctx, func(account authexported.Account) bool {
+	//	ethAccount, ok := account.(*ethermint.EthAccount)
+	//	if !ok {
+	//		// ignore non EthAccounts
+	//		return false
+	//	}
+	//
+	//	addr := ethAccount.EthAddress()
+	//
+	//	storage, err := k.GetAccountStorage(ctx, addr)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	genAccount := types.GenesisAccount{
+	//		Address: addr.String(),
+	//		Code:    k.GetCode(ctx, addr),
+	//		Storage: storage,
+	//	}
+	//
+	//	ethGenAccounts = append(ethGenAccounts, genAccount)
+	//	return false
+	//})
 
 	config, _ := k.GetChainConfig(ctx)
 
 	return GenesisState{
-		Accounts:    ethGenAccounts,
-		TxsLogs:     k.GetAllTxLogs(ctx),
+		Accounts:    []types.GenesisAccount{},
+		TxsLogs:     []types.TransactionLogs{},
 		ChainConfig: config,
 		Params:      k.GetParams(ctx),
 	}
