@@ -56,7 +56,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, accountKeeper types.AccountKeeper, d
 		codeFilePath := absoluteCodePath + account.Address + codeFileSuffix
 		if pathExist(codeFilePath) {
 			code := readCodeFromFile(codeFilePath)
-			k.SetCode(ctx, address, code)
+			k.SetCodeDirectly(ctx, code)
 		}
 
 		// read Storage From file
@@ -64,7 +64,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, accountKeeper types.AccountKeeper, d
 		if pathExist(storageFilePath) {
 			storage := readStorageFromFile(storageFilePath)
 			for _, state := range storage {
-				k.SetState(ctx, address, state.Key, state.Value)
+				k.SetStateDirectly(ctx, address, state.Key, state.Value)
 			}
 		}
 	}
@@ -78,10 +78,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, accountKeeper types.AccountKeeper, d
 		for _, fileInfo := range fileInfos {
 			hash := convertHexStrToHash(fileInfo.Name())
 			logs := readTxLogsFromFile(absoluteTxlogsFilePath + fileInfo.Name())
-			err = k.SetLogs(ctx, hash, logs)
-			if err != nil {
-				panic(err)
-			}
+			k.SetTxLogsDirectly(ctx, hash, logs)
 		}
 	}
 
