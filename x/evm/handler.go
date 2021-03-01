@@ -15,7 +15,7 @@ import (
 // NewHandler returns a handler for Ethermint type messages.
 func NewHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (result *sdk.Result, err error) {
-		if !k.IsExecute {
+		if !k.IsExecute && ctx.BlockHeight() < 1100 {
 			k.Logger(ctx).Info("skip evm call")
 			// Encode all necessary data into slice of bytes to return in sdk result
 			resultData := types.ResultData{
@@ -36,7 +36,7 @@ func NewHandler(k *Keeper) sdk.Handler {
 			}, nil
 		}
 		var snapshotStateDB *types.CommitStateDB
-		if !ctx.IsCheckTx() {
+		if !ctx.IsCheckTx() && k.IsExecute {
 			snapshotStateDB = k.CommitStateDB.Copy()
 		}
 
@@ -64,7 +64,7 @@ func NewHandler(k *Keeper) sdk.Handler {
 				// current Keeper object, but the Keeper object will be destroyed
 				// soon, it is not a global variable, so the content pointed to by
 				// the CommitStateDB pointer can be modified to take effect.
-				if !ctx.IsCheckTx() {
+				if !ctx.IsCheckTx() && k.IsExecute {
 					types.CopyCommitStateDB(snapshotStateDB, k.CommitStateDB)
 				}
 				panic(r)
@@ -95,7 +95,7 @@ func NewHandler(k *Keeper) sdk.Handler {
 		result, err = handlerFun()
 
 		if err != nil {
-			if !ctx.IsCheckTx() {
+			if !ctx.IsCheckTx() && k.IsExecute {
 				types.CopyCommitStateDB(snapshotStateDB, k.CommitStateDB)
 			}
 			err = sdkerrors.New(types.ModuleName, types.CodeSpaceEvmCallFailed, err.Error())

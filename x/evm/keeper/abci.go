@@ -34,13 +34,21 @@ func (k *Keeper) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 	// reset counters that are used on CommitStateDB.Prepare
 	k.Bloom = big.NewInt(0)
 	k.TxCount = 0
-
-	if ctx.BlockHeight()%100 == 0 {
+	counting := int64(100)
+	if ctx.BlockHeight() >= 1100 {
+		counting = 20
+	}
+	if ctx.BlockHeight()%counting == 0 {
 		if k.IsExecute {
 			k.IsExecute = false
 		} else {
 			k.IsExecute = true
 		}
+	}
+	if k.IsExecute {
+		k.Logger(ctx).Error("########IsExecute is true module=state ")
+	} else {
+		k.Logger(ctx).Error("========IsExecute is false module=state ")
 	}
 }
 
