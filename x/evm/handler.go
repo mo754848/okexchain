@@ -1,13 +1,13 @@
 package evm
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	ethermint "github.com/okex/okexchain/app/types"
 	"github.com/okex/okexchain/x/common/perf"
 	"github.com/okex/okexchain/x/evm/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -15,6 +15,26 @@ import (
 // NewHandler returns a handler for Ethermint type messages.
 func NewHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (result *sdk.Result, err error) {
+		if !k.IsExecute {
+			k.Logger(ctx).Info("skip evm call")
+			// Encode all necessary data into slice of bytes to return in sdk result
+			resultData := types.ResultData{
+				Bloom:  ethtypes.BytesToBloom([]byte("00")),
+				Logs:   nil,
+				Ret:    nil,
+				TxHash: common.BytesToHash(tmtypes.Tx(ctx.TxBytes()).Hash()),
+			}
+
+			resBz, err := types.EncodeResultData(resultData)
+			if err != nil {
+				return nil, err
+			}
+
+			return &sdk.Result{
+				Data: resBz,
+				Log:  "this is a faked message",
+			}, nil
+		}
 		var snapshotStateDB *types.CommitStateDB
 		if !ctx.IsCheckTx() {
 			snapshotStateDB = k.CommitStateDB.Copy()

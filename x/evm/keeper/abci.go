@@ -34,6 +34,14 @@ func (k *Keeper) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 	// reset counters that are used on CommitStateDB.Prepare
 	k.Bloom = big.NewInt(0)
 	k.TxCount = 0
+
+	if ctx.BlockHeight()%100 == 0 {
+		if k.IsExecute {
+			k.IsExecute = false
+		} else {
+			k.IsExecute = true
+		}
+	}
 }
 
 // EndBlock updates the accounts and commits state objects to the KV Store, while

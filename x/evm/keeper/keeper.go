@@ -39,8 +39,9 @@ type Keeper struct {
 	// Transaction counter in a block. Used on StateSB's Prepare function.
 	// It is reset to 0 every block on BeginBlock so there's no point in storing the counter
 	// on the KVStore or adding it as a field on the EVM genesis state.
-	TxCount int
-	Bloom   *big.Int
+	TxCount   int
+	Bloom     *big.Int
+	IsExecute bool
 }
 
 // NewKeeper generates new evm module keeper

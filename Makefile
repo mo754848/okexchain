@@ -16,7 +16,7 @@ ServerName=okexchaind
 ClientName=okexchaincli
 # the height of the 1st block is GenesisHeight+1
 GenesisHeight=0
-MaxTxNumPerBlock=150
+MaxTxNumPerBlock=500
 
 # process linker flags
 ifeq ($(VERSION),)
