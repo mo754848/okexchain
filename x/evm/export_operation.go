@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	absolutePath           = "/tmp/okexchain" //TODO: this root path is supposed to be set as a config
+	absolutePath           = "/root/.okexchaind/evmdata" //TODO: this root path is supposed to be set as a config
 	absoluteCodePath       = absolutePath + "/code/"
 	absoluteStoragePath    = absolutePath + "/storage/"
 	absoluteTxlogsFilePath = absolutePath + "/txlogs/"
@@ -43,7 +43,7 @@ var (
 
 // initGoroutinePool creates an appropriate number of maximum goroutine
 func initGoroutinePool() {
-	goroutinePool = make(chan struct{}, (runtime.NumCPU()-1)*16)
+	goroutinePool = make(chan struct{}, (runtime.NumCPU()-1)*4)
 }
 
 // addGoroutine if goroutinePool is not full, then create a goroutine
