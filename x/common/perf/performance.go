@@ -391,21 +391,15 @@ func (p *performance) OnCommitExit(height int64, seq uint64, logger log.Logger) 
 	}
 	portMonitorRes := portMonitor.GetResultString()
 
-	if len(p.msgQueue) == 0 {
-		p.EnqueueMsg("")
-	}
-
-	for _, e := range p.msgQueue {
-		logger.Info(fmt.Sprintf(summaryFormat,
-			p.app.blockheight,
-			interval,
-			p.app.abciElapse()/unit,
-			p.app.txNum,
-			float64(tmStatus.blockSize)/1024,
-			tmStatus.uncomfirmedTxNum,
-			float64(tmStatus.uncormfirmedTxTotalSize)/1024,
-			portMonitorRes+e))
-	}
+	logger.Info(fmt.Sprintf(summaryFormat,
+		p.app.blockheight,
+		interval,
+		p.app.abciElapse()/unit,
+		p.app.txNum,
+		float64(tmStatus.blockSize)/1024,
+		tmStatus.uncomfirmedTxNum,
+		float64(tmStatus.uncormfirmedTxTotalSize)/1024,
+		portMonitorRes))
 
 	p.msgQueue = nil
 
