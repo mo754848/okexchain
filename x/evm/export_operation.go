@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	absolutePath           = "/root/.okexchaind/evmdata" //TODO: this root path is supposed to be set as a config
+	absolutePath           = "/Users/green/.okexchaind" //TODO: this root path is supposed to be set as a config
 	absoluteCodePath       = absolutePath + "/code/"
 	absoluteStoragePath    = absolutePath + "/storage/"
 	absoluteTxlogsFilePath = absolutePath + "/txlogs/"
