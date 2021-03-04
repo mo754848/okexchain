@@ -1,11 +1,9 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type (
@@ -23,7 +21,7 @@ type (
 	// NOTE: balance is omitted as it is imported from the auth account balance.
 	GenesisAccount struct {
 		Address string        `json:"address"`
-		Code    hexutil.Bytes `json:"code,omitempty"`
+		Code    string        `json:"code,omitempty"`
 		Storage Storage       `json:"storage,omitempty"`
 	}
 )
@@ -32,9 +30,6 @@ type (
 func (ga GenesisAccount) Validate() error {
 	if ga.Address == (ethcmn.Address{}.String()) {
 		return fmt.Errorf("address cannot be the zero address %s", ga.Address)
-	}
-	if ga.Code != nil && len(ga.Code) == 0 {
-		return errors.New("code bytes cannot be empty")
 	}
 
 	return ga.Storage.Validate()

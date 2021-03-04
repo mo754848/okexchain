@@ -25,6 +25,29 @@ func NewTransactionLogs(hash ethcmn.Hash, logs []*ethtypes.Log) TransactionLogs 
 	}
 }
 
+//func (tx TransactionLogs) MarshalJSON() ([]byte, error) {
+//	return json.Marshal(&struct {
+//		Hash string 		 `json:"hash"`
+//		Logs []*ethtypes.Log `json:"logs"`
+//	}{
+//		Hash: tx.Hash.Hex(),
+//		Logs: tx.Logs,
+//	})
+//}
+//
+//func (tx TransactionLogs) UnmarshalJSON(data []byte) error {
+//	alias := &struct {
+//		Hash string 		 `json:"hash"`
+//		Logs []*ethtypes.Log `json:"logs"`
+//	}{}
+//	if err := json.Unmarshal(data, &alias); err != nil {
+//		return err
+//	}
+//	tx.Hash = ethcmn.HexToHash(alias.Hash)
+//	tx.Logs = alias.Logs
+//	return nil
+//}
+
 // MarshalLogs encodes an array of logs using amino
 func MarshalLogs(logs []*ethtypes.Log) ([]byte, error) {
 	return ModuleCdc.MarshalBinaryLengthPrefixed(logs)

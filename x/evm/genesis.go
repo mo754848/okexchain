@@ -2,9 +2,10 @@ package evm
 
 import (
 	"fmt"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
 
@@ -44,9 +45,17 @@ func InitGenesis(ctx sdk.Context, k Keeper, accountKeeper types.AccountKeeper, d
 		evmBalance := acc.GetCoins().AmountOf(evmDenom)
 		csdb.SetNonce(address, acc.GetSequence())
 		csdb.SetBalance(address, evmBalance.BigInt())
-		csdb.SetCode(address, account.Code)
-		for _, storage := range account.Storage {
-			csdb.SetState(address, storage.Key, storage.Value)
+
+		if account.Code != "" {
+			hexcode,err := hexutil.Decode(account.Code)
+			if err != nil {
+				panic(err)
+			}
+			k.SetCodeDirectly(ctx, hexcode)
+
+			for _, storage := range account.Storage {
+				k.SetStateDirectly(ctx, address, storage.Key, storage.Value)
+			}
 		}
 	}
 
@@ -97,8 +106,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper, ak types.AccountKeeper) GenesisSta
 
 		genAccount := types.GenesisAccount{
 			Address: addr.String(),
-			Code:    csdb.GetCode(addr),
 			Storage: storage,
+		}
+
+		code := csdb.GetCode(addr)
+		if code != nil && len(code) != 0 {
+			genAccount.Code = hexutil.Bytes(csdb.GetCode(addr)).String()
 		}
 
 		ethGenAccounts = append(ethGenAccounts, genAccount)
