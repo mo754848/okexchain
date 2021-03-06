@@ -107,10 +107,10 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 		return nil, err
 	}
 	if types.WarningSignal {
-		fmt.Sprintf(`contract %d creation is captured:
+		fmt.Printf(`contract %d creation is captured:
 height: %d,
 msg: 	%+v,
-result: %+v`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
+result: %+v\n`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
 		os.Exit(1)
 	}
 	if !st.Simulate {
@@ -205,10 +205,10 @@ func handleMsgEthermint(ctx sdk.Context, k *Keeper, msg types.MsgEthermint) (*sd
 		return nil, err
 	}
 	if types.WarningSignal {
-		fmt.Sprintf(`contract %d creation is captured:
+		fmt.Printf(`contract %d creation is captured:
 height: %d,
 msg: 	%+v,
-result: %+v`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
+result: %+v\n`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
 		os.Exit(1)
 	}
 	// update block bloom filter
