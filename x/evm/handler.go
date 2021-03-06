@@ -1,10 +1,12 @@
 package evm
 
 import (
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	ethermint "github.com/okex/okexchain/app/types"
 	"github.com/okex/okexchain/x/common/perf"
 	"github.com/okex/okexchain/x/evm/types"
+	"os"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -104,7 +106,13 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 	if err != nil {
 		return nil, err
 	}
-
+	if types.WarningSignal {
+		fmt.Sprintf(`contract %d creation is captured:
+height: %d,
+msg: 	%+v,
+result: %+v`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
+		os.Exit(1)
+	}
 	if !st.Simulate {
 		// update block bloom filter
 		k.Bloom.Or(k.Bloom, executionResult.Bloom)
@@ -196,7 +204,13 @@ func handleMsgEthermint(ctx sdk.Context, k *Keeper, msg types.MsgEthermint) (*sd
 	if err != nil {
 		return nil, err
 	}
-
+	if types.WarningSignal {
+		fmt.Sprintf(`contract %d creation is captured:
+height: %d,
+msg: 	%+v,
+result: %+v`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
+		os.Exit(1)
+	}
 	// update block bloom filter
 	if !st.Simulate {
 		k.Bloom.Or(k.Bloom, executionResult.Bloom)
