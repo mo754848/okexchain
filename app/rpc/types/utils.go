@@ -119,6 +119,29 @@ func EthHeaderFromTendermint(header tmtypes.Header) *ethtypes.Header {
 	}
 }
 
+func FormatHeader(header tmtypes.Header) map[string]interface{} {
+	ret := map[string]interface{}{
+		"number":           hexutil.Uint64(header.Height),
+		"hash":             hexutil.Bytes(header.Hash()),
+		"parentHash":       hexutil.Bytes(header.LastBlockID.Hash),
+		"sha3Uncles":       common.Hash{},     // No uncles in Tendermint
+		//"logsBloom":        bloom,
+		"transactionsRoot": hexutil.Bytes(header.DataHash),
+		"stateRoot":        hexutil.Bytes(header.AppHash),
+		"receiptsRoot":     common.Hash{},
+		"miner":            common.BytesToAddress(header.ProposerAddress),
+		"difficulty":       hexutil.Uint64(0),
+		"extraData":        hexutil.Bytes{},
+		"gasLimit":         hexutil.Uint64(int64(^uint32(0))), // Static gas limit
+		//"gasUsed":          (*hexutil.Big)(gasUsed),
+		"timestamp":        hexutil.Uint64(header.Time.Unix()),
+		"nonce":            hexutil.Uint64(0), // PoW specific
+		"mixHash":          common.Hash{},
+	}
+
+	return ret
+}
+
 // EthTransactionsFromTendermint returns a slice of ethereum transaction hashes and the total gas usage from a set of
 // tendermint block transactions.
 func EthTransactionsFromTendermint(clientCtx clientcontext.CLIContext, txs []tmtypes.Tx, blockHash common.Hash, blockNumber uint64) ([]common.Hash, *big.Int, []*Transaction, error) {

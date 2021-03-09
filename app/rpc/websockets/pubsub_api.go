@@ -5,6 +5,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/gorilla/websocket"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -109,7 +111,8 @@ func (api *PubSubAPI) subscribeNewHeads(conn *websocket.Conn) (rpc.ID, error) {
 						Method:  "eth_subscription",
 						Params: &SubscriptionResult{
 							Subscription: sub.ID(),
-							Result:       header,
+							Result:       initEthHeader(header, &data.Header),
+							//Result: rpctypes.FormatHeader(data.Header),
 						},
 					}
 
@@ -131,6 +134,45 @@ func (api *PubSubAPI) subscribeNewHeads(conn *websocket.Conn) (rpc.ID, error) {
 	}(sub.Event(), sub.Err())
 
 	return sub.ID(), nil
+}
+
+type EthHeader struct {
+	ParentHash  common.Hash    `json:"parentHash"       gencodec:"required"`
+	UncleHash   common.Hash    `json:"sha3Uncles"       gencodec:"required"`
+	Coinbase    common.Address `json:"miner"            gencodec:"required"`
+	Root        common.Hash    `json:"stateRoot"        gencodec:"required"`
+	TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
+	ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
+	Bloom       ethtypes.Bloom          `json:"logsBloom"        gencodec:"required"`
+	Difficulty  *hexutil.Big   `json:"difficulty"       gencodec:"required"`
+	Number      *hexutil.Big   `json:"number"           gencodec:"required"`
+	GasLimit    hexutil.Uint64 `json:"gasLimit"         gencodec:"required"`
+	GasUsed     hexutil.Uint64 `json:"gasUsed"          gencodec:"required"`
+	Time        hexutil.Uint64 `json:"timestamp"        gencodec:"required"`
+	Extra       hexutil.Bytes  `json:"extraData"        gencodec:"required"`
+	MixDigest   common.Hash    `json:"mixHash"`
+	Nonce       ethtypes.BlockNonce     `json:"nonce"`
+	Hash        common.Hash    `json:"hash"`
+}
+
+func initEthHeader(h *ethtypes.Header, oh *tmtypes.Header) (enc EthHeader) {
+	enc.ParentHash = h.ParentHash
+	enc.UncleHash = h.UncleHash
+	enc.Coinbase = h.Coinbase
+	enc.Root = h.Root
+	enc.TxHash = h.TxHash
+	enc.ReceiptHash = h.ReceiptHash
+	enc.Bloom = h.Bloom
+	enc.Difficulty = (*hexutil.Big)(h.Difficulty)
+	enc.Number = (*hexutil.Big)(h.Number)
+	enc.GasLimit = hexutil.Uint64(h.GasLimit)
+	enc.GasUsed = hexutil.Uint64(h.GasUsed)
+	enc.Time = hexutil.Uint64(h.Time)
+	enc.Extra = h.Extra
+	enc.MixDigest = h.MixDigest
+	enc.Nonce = h.Nonce
+	enc.Hash = common.BytesToHash(oh.Hash())
+	return
 }
 
 func (api *PubSubAPI) subscribeLogs(conn *websocket.Conn, extra interface{}) (rpc.ID, error) {
