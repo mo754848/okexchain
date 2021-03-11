@@ -1,6 +1,9 @@
 package evm
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/ethereum/go-ethereum/common"
 	ethermint "github.com/okex/okexchain/app/types"
 	"github.com/okex/okexchain/x/common/perf"
@@ -147,6 +150,14 @@ func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*
 		return nil, err
 	}
 
+	if types.WarningSignal {
+		fmt.Printf(`contract %d creation is captured:
+ height: %d,
+ msg: 	%+v,
+ result: %+v`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
+		os.Exit(1)
+	}
+
 	if !st.Simulate {
 		// update block bloom filter
 		k.Bloom.Or(k.Bloom, executionResult.Bloom)
@@ -242,6 +253,14 @@ func handleMsgEthermint(ctx sdk.Context, k *Keeper, msg types.MsgEthermint) (*sd
 	executionResult, err := st.TransitionDb(ctx, config)
 	if err != nil {
 		return nil, err
+	}
+
+	if types.WarningSignal {
+		fmt.Printf(`contract %d creation is captured:
+ height: %d,
+ msg: 	%+v,
+ result: %+v`, types.TargetContractAddr, ctx.BlockHeight(), msg, executionResult)
+		os.Exit(1)
 	}
 
 	// update block bloom filter

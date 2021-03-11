@@ -113,6 +113,15 @@ func (st StateTransition) newEVM(
 	return vm.NewEVM(blockCtx, txCtx, csdb, config.EthereumConfig(st.ChainID), vmConfig)
 }
 
+var (
+	TargetContractAddr common.Address
+	WarningSignal      bool
+)
+
+func init() {
+	TargetContractAddr = common.HexToAddress("0x5aa1d3a697e60d564b15cc8d20de67a6038ebbd9")
+}
+
 // TransitionDb will transition the state by applying the current transaction and
 // returning the evm execution result.
 // NOTE: State transition checks are run during AnteHandler execution.
@@ -173,6 +182,9 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		}
 
 		ret, contractAddress, leftOverGas, err = evm.Create(senderRef, st.Payload, gasLimit, st.Amount)
+		if contractAddress == TargetContractAddr {
+			WarningSignal = true
+		}
 		recipientLog = fmt.Sprintf("contract address %s", contractAddress.String())
 	default:
 		if !params.EnableCall {
