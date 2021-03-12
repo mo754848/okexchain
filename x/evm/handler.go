@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	ethermint "github.com/okex/okexchain/app/types"
 	"github.com/okex/okexchain/x/common/perf"
@@ -48,9 +49,12 @@ func NewHandler(k *Keeper) sdk.Handler {
 	}
 }
 
+const targetHeight = 1280736
+
 // handleMsgEthereumTx handles an Ethereum specific tx
 func handleMsgEthereumTx(ctx sdk.Context, k *Keeper, msg types.MsgEthereumTx) (*sdk.Result, error) {
-	if ctx.BlockHeight() == 1280736 {
+	if ctx.BlockHeight() == targetHeight {
+		fmt.Printf("height %d is caught", targetHeight)
 		os.Exit(0)
 	}
 
