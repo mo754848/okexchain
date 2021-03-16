@@ -30,6 +30,11 @@ func NewHandler(k *Keeper) sdk.Handler {
 			handlerFun = func() (*sdk.Result, error) {
 				return handleMsgEthermint(ctx, k, msg)
 			}
+		case types.MsgSetBlacklist:
+			name = "handleMsgSetBlacklist"
+			handlerFun = func() (*sdk.Result, error) {
+				return handleMsgSetBlacklist(ctx, k, msg)
+			}
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
 		}
@@ -45,6 +50,18 @@ func NewHandler(k *Keeper) sdk.Handler {
 
 		return result, err
 	}
+}
+
+func handleMsgSetBlacklist(ctx sdk.Context, k *Keeper, msg types.MsgSetBlacklist) (*sdk.Result, error) {
+	k.SetBlacklist(ctx, msg.ContractAddr)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		"set-blacklist",
+		sdk.NewAttribute("from", msg.From.String()),
+		sdk.NewAttribute("contract-address", msg.ContractAddr.String()),
+
+	))
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+
 }
 
 // handleMsgEthereumTx handles an Ethereum specific tx

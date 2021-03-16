@@ -27,7 +27,16 @@ var (
 	KeyPrefixStorage     = []byte{0x05}
 	KeyPrefixChainConfig = []byte{0x06}
 	KeyPrefixHeightHash  = []byte{0x07}
+	KeyPrefixBlacklist   = []byte{0x08}
 )
+
+func GetBlacklistMemberKey(contractAddr sdk.AccAddress) []byte {
+	return append(KeyPrefixBlacklist, contractAddr...)
+}
+
+func SplitBlacklistMember(key []byte) sdk.AccAddress {
+	return key[1:]
+}
 
 // HeightHashKey returns the key for the given chain epoch and height.
 // The key will be composed in the following order:

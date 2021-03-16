@@ -38,6 +38,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	evmTxCmd.AddCommand(flags.PostCommands(
 		GetCmdSendTx(cdc),
 		GetCmdGenCreateTx(cdc),
+		GetSetBlocklistCmd(cdc),
 	)...)
 
 	return evmTxCmd
@@ -174,6 +175,28 @@ func GetCmdGenCreateTx(cdc *codec.Codec) *cobra.Command {
 				sdk.AccAddress(contractAddr.Bytes()),
 			)
 			return nil
+		},
+	}
+}
+
+func GetSetBlocklistCmd(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "set-blacklist <contract address>",
+		Short: "set-blacklist",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
+
+			from := cliCtx.GetFromAddress()
+			contractAddr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgSetBlacklist(from, contractAddr)
+			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
 }

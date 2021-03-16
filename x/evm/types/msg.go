@@ -23,7 +23,41 @@ var (
 	_ sdk.Msg = MsgEthermint{}
 	_ sdk.Msg = MsgEthereumTx{}
 	_ sdk.Tx  = MsgEthereumTx{}
+	_ sdk.Msg = MsgSetBlacklist{}
 )
+
+type MsgSetBlacklist struct {
+	From         sdk.AccAddress `json:"from"`
+	ContractAddr sdk.AccAddress `json:"contract_address"`
+}
+
+func NewMsgSetBlacklist(from, contractAddr sdk.AccAddress) MsgSetBlacklist {
+	return MsgSetBlacklist{
+		from,
+		contractAddr,
+	}
+}
+
+func (msg MsgSetBlacklist) Route() string {
+	return RouterKey
+}
+
+func (msg MsgSetBlacklist) Type() string {
+	return "set_blacklist"
+}
+
+func (msg MsgSetBlacklist) ValidateBasic() error {
+	return nil
+}
+
+func (msg MsgSetBlacklist) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg MsgSetBlacklist) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.From}
+}
 
 var big8 = big.NewInt(8)
 
