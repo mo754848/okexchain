@@ -371,8 +371,33 @@ func (csdb *CommitStateDB) SetBlockHash(hash ethcmn.Hash) {
 	csdb.bhash = hash
 }
 
+func (csdb *CommitStateDB) SetBlacklist(contractAddr sdk.AccAddress) {
+	csdb.ctx.KVStore(csdb.storeKey).Set(GetBlacklistMemberKey(contractAddr), []byte(""))
+}
+
+func (csdb *CommitStateDB) GetBlacklist() (blacklist []sdk.AccAddress) {
+	store := csdb.ctx.KVStore(csdb.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, KeyPrefixBlacklist)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		blacklist = append(blacklist, SplitBlacklistMember(iterator.Key()))
+	}
+
+	return
+}
+
+func (csdb *CommitStateDB) IsContractBlocked(contractAddr sdk.AccAddress) bool {
+	return csdb.ctx.KVStore(csdb.storeKey).Has(GetBlacklistMemberKey(contractAddr))
+}
+
 // GetCode returns the code for a given account.
 func (csdb *CommitStateDB) GetCode(addr ethcmn.Address) []byte {
+	// check for blacklist
+	if csdb.IsContractBlocked(addr.Bytes()) {
+		return nil
+	}
+
 	so := csdb.getStateObject(addr)
 	if so != nil {
 		return so.Code(nil)
@@ -768,7 +793,6 @@ func (csdb *CommitStateDB) CreateAccount(addr ethcmn.Address) {
 		newobj.setBalance(evmDenom, sdk.NewDecFromBigIntWithPrec(prevobj.Balance(), sdk.Precision)) // int2dec
 	}
 }
-
 
 // ForEachStorage iterates over each storage items, all invoke the provided
 // callback on each key, value pair.

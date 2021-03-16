@@ -53,7 +53,8 @@ func NewHandler(k *Keeper) sdk.Handler {
 }
 
 func handleMsgSetBlacklist(ctx sdk.Context, k *Keeper, msg types.MsgSetBlacklist) (*sdk.Result, error) {
-	k.SetBlacklist(ctx, msg.ContractAddr)
+	csdb := types.CreateEmptyCommitStateDB(k.GeneratePureCSDBParams(), ctx)
+	csdb.SetBlacklist(msg.ContractAddr)
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"set-blacklist",
 		sdk.NewAttribute("from", msg.From.String()),

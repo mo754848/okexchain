@@ -52,8 +52,9 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryBlacklist(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	params := keeper.GetBlacklist(ctx)
-	res, errUnmarshal := codec.MarshalJSONIndent(types.ModuleCdc, params)
+	csdb := types.CreateEmptyCommitStateDB(keeper.GeneratePureCSDBParams(), ctx)
+	blacklist := csdb.GetBlacklist()
+	res, errUnmarshal := codec.MarshalJSONIndent(types.ModuleCdc, blacklist)
 	if errUnmarshal != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to marshal result to JSON", errUnmarshal.Error()))
 	}
