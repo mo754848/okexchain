@@ -43,10 +43,21 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryExportAccount(ctx, path, keeper)
 		case types.QueryParameters:
 			return queryParams(ctx, keeper)
+		case types.QueryBlacklist:
+			return queryBlacklist(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown query endpoint")
 		}
 	}
+}
+
+func queryBlacklist(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	params := keeper.GetBlacklist(ctx)
+	res, errUnmarshal := codec.MarshalJSONIndent(types.ModuleCdc, params)
+	if errUnmarshal != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to marshal result to JSON", errUnmarshal.Error()))
+	}
+	return res, nil
 }
 
 func queryBalance(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {

@@ -31,8 +31,34 @@ func GetQueryCmd(moduleName string, cdc *codec.Codec) *cobra.Command {
 		GetCmdGetStorageAt(moduleName, cdc),
 		GetCmdGetCode(moduleName, cdc),
 		GetCmdQueryParams(moduleName, cdc),
+		GetCmdBlacklist(moduleName, cdc),
 	)...)
 	return evmQueryCmd
+}
+
+func GetCmdBlacklist(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "blacklist",
+		Short: "Query blacklist",
+		Long: strings.TrimSpace(`Query the contract blacklist:
+
+$ okexchaincli query evm blacklist
+`),
+		Args: cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryBlacklist)
+			bz, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var blacklist []sdk.AccAddress
+			cdc.MustUnmarshalJSON(bz, &blacklist)
+			return cliCtx.PrintOutput(blacklist)
+		},
+	}
 }
 
 // QueryEvmTxCmd implements the command for the query of transactions including evm
