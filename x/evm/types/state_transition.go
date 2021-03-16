@@ -116,7 +116,13 @@ func (st StateTransition) newEVM(
 // TransitionDb will transition the state by applying the current transaction and
 // returning the evm execution result.
 // NOTE: State transition checks are run during AnteHandler execution.
-func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*ExecutionResult, error) {
+func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (executionResult *ExecutionResult, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = ErrCallBlockedContract(e.(string))
+		}
+	}()
+
 	contractCreation := st.Recipient == nil
 
 	cost, err := core.IntrinsicGas(st.Payload, contractCreation, config.IsHomestead(), config.IsIstanbul())
@@ -167,14 +173,14 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	switch contractCreation {
 	case true:
 		if !params.EnableCreate {
-			return nil, ErrCreateDisabled
+			return executionResult, ErrCreateDisabled
 		}
 
 		ret, contractAddress, leftOverGas, err = evm.Create(senderRef, st.Payload, gasLimit, st.Amount)
 		recipientLog = fmt.Sprintf("contract address %s", contractAddress.String())
 	default:
 		if !params.EnableCall {
-			return nil, ErrCallDisabled
+			return executionResult, ErrCallDisabled
 		}
 
 		// Increment the nonce for the next transaction	(just for evm state transition)
@@ -199,7 +205,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	}()
 	if err != nil {
 		// Consume gas before returning
-		return nil, newRevertError(ret, err)
+		return executionResult, newRevertError(ret, err)
 	}
 
 	// Resets nonce to value pre state transition
@@ -216,7 +222,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	if st.TxHash != nil && !st.Simulate {
 		logs, err = csdb.GetLogs(*st.TxHash)
 		if err != nil {
-			return nil, err
+			return
 		}
 
 		bloomInt = big.NewInt(0).SetBytes(ethtypes.LogsBloom(logs))
@@ -226,12 +232,12 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 	if !st.Simulate {
 		// Finalise state if not a simulated transaction
 		// TODO: change to depend on config
-		if err := csdb.Finalise(true); err != nil {
-			return nil, err
+		if err = csdb.Finalise(true); err != nil {
+			return
 		}
 
 		if _, err = csdb.Commit(true); err != nil {
-			return nil, err
+			return
 		}
 	}
 
@@ -249,14 +255,14 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 
 	resBz, err := EncodeResultData(resultData)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	resultLog := fmt.Sprintf(
 		"executed EVM state transition; sender address %s; %s", st.Sender.String(), recipientLog,
 	)
 
-	executionResult := &ExecutionResult{
+	executionResult = &ExecutionResult{
 		Logs:  logs,
 		Bloom: bloomInt,
 		Result: &sdk.Result{
@@ -270,8 +276,7 @@ func (st StateTransition) TransitionDb(ctx sdk.Context, config ChainConfig) (*Ex
 		},
 	}
 
-
-	return executionResult, nil
+	return
 }
 
 func (st StateTransition) RefundGas(ctx sdk.Context) error {

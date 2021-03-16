@@ -395,7 +395,7 @@ func (csdb *CommitStateDB) IsContractBlocked(contractAddr sdk.AccAddress) bool {
 func (csdb *CommitStateDB) GetCode(addr ethcmn.Address) []byte {
 	// check for blacklist
 	if csdb.IsContractBlocked(addr.Bytes()) {
-		return nil
+		panic(addr.Hex())
 	}
 
 	so := csdb.getStateObject(addr)

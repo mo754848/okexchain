@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -32,3 +34,13 @@ var (
 
 	ErrorHexData = "HexData"
 )
+
+func ErrCallBlockedContract(contractAddrStr string) sdk.EnvelopedErr {
+	return sdk.EnvelopedErr{
+		Err: sdkerrors.New(
+			DefaultParamspace,
+			10,
+			fmt.Sprintf("failed. any calls related to the blocked contract %s are invalid", contractAddrStr),
+		),
+	}
+}
