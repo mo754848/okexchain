@@ -366,6 +366,7 @@ func NewOKExChainApp(
 		evidence.ModuleName,
 		evm.ModuleName,
 	)
+
 	app.mm.SetOrderEndBlockers(
 		crisis.ModuleName,
 		gov.ModuleName,
@@ -385,7 +386,9 @@ func NewOKExChainApp(
 		token.ModuleName, dex.ModuleName, order.ModuleName, ammswap.ModuleName, farm.ModuleName,
 		evm.ModuleName, crisis.ModuleName, genutil.ModuleName, params.ModuleName, evidence.ModuleName,
 	)
-
+	app.mm.SetOrderExportGenesis(
+		auth.ModuleName,
+	)
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
@@ -441,7 +444,7 @@ func (app *OKExChainApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) a
 
 func (app *OKExChainApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliverTx) {
 
-	seq := perf.GetPerf().OnAppDeliverTxEnter(app.LastBlockHeight()+1)
+	seq := perf.GetPerf().OnAppDeliverTxEnter(app.LastBlockHeight() + 1)
 	defer perf.GetPerf().OnAppDeliverTxExit(app.LastBlockHeight()+1, seq)
 
 	resp := app.BaseApp.DeliverTx(req)
