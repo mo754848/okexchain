@@ -3,13 +3,15 @@ package filters
 import (
 	"context"
 	"fmt"
-	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/okex/okexchain/cmd/client"
+	"github.com/spf13/viper"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/bloombits"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/filters"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	rpctypes "github.com/okex/okexchain/app/rpc/types"
 )
@@ -112,6 +114,11 @@ func (f *Filter) Logs(ctx context.Context) ([]*ethtypes.Log, error) {
 	if f.criteria.FromBlock.Int64() <= tmtypes.GetStartBlockHeight() ||
 		f.criteria.ToBlock.Int64() <= tmtypes.GetStartBlockHeight(){
 		return nil, fmt.Errorf("from and to block height must greater than %d", tmtypes.GetStartBlockHeight())
+	}
+
+	heightSpan := viper.GetInt64(client.FlagGetLogsHeightSpan)
+	if f.criteria.ToBlock.Int64() - f.criteria.FromBlock.Int64() > heightSpan {
+		return nil, fmt.Errorf("block height span must be less than or equal to %d", heightSpan)
 	}
 
 	begin := f.criteria.FromBlock.Uint64()
