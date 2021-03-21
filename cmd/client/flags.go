@@ -14,5 +14,5 @@ const (
 func RegisterAppFlag(cmd *cobra.Command) {
 	cmd.Flags().Bool(FlagPersonalAPI, true, "Enable the the personal_ prefixed set of APIs in the Web3 JSON-RPC spec")
 	cmd.Flags().Bool(evmtypes.FlagEnableBloomFilter, true, "enable bloom filter for logs")
-	cmd.Flags().Int64(FlagGetLogsHeightSpan, 5000, "config the block height span for get logs")
+	cmd.Flags().Int64(FlagGetLogsHeightSpan, -1, "config the block height span for get logs")
 }
